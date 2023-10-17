@@ -23,7 +23,7 @@ db_params = {
     "host": "localhost",
     "database": "postgres",
     "user": "postgres",
-    "password": "aidaniscool"
+    "password": ""
 }
 
 # Establish a connection to the database
