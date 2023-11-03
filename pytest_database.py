@@ -9,9 +9,7 @@ import psycopg2
 # This code takes input serial data from our sensors, processes it, and stores it in an 
 # internal dictionary & an external local PostgreSQL database.
 
-# Nonfunctional until either:
-    # We get the names of the sensors & I can create corresponding tables in DB
-    # Functionality to create tables internally is implemented into the code
+# TODO: rewrite cursors so they open and close directly before and after each execution 
 
 #stores value, unit, and the unix time
 class Data:
@@ -49,21 +47,39 @@ conn = psycopg2.connect(**db_params)
 # Create a cursor object to interact with the database
 cursor = conn.cursor()
 
+# gets the next available session name
+def get_next_session_name():
+    cursor.execute("SELECT MAX(session_number) FROM sessions")
+    max_session_number = cursor.fetchone()[0]
+    if max_session_number is not None:
+        return f"session_{max_session_number + 1}"
+    else:
+        return "session_1"
+    
+# creates a new table corresponding to the session #
+def create_session_table(table_name):
+        print("Creating table " + str(table_name) + "...")
+        # Creates table in the database named 'table_name' with appropriate columns/datatypes
+        create_table_query = f"CREATE TABLE {table_name} (sensor_name text, value double precision, unix bigint)"
+        cursor.execute(create_table_query)
+        # Adds the table that was just created into the 'sessions' table
+        session_number = int(table_name[-1])
+        print("Adding table number " + str(session_number) + " to 'sessions'...")
+        insert_into_sessions_query=f"INSERT INTO sessions (session_number) VALUES (\'{session_number}\')"
+        cursor.execute(insert_into_sessions_query)
+        conn.commit()
+   
 # inputs 'data' into 'sensor_name' table in database
-def input_to_database(sensor_name, data):
+def input_to_database(table_name, sensor_name, data):
     try:
         data_unix = data.getUnix()
         data_value = data.getValue()
-        # Note: This assumes that the tables have been set-up, with each sensor being a table and 
-        #       columns UNIX, UNIT, VALUE
-        #           - This can be done by creating the tables from within code, though this would 
-        #             constantly overwrite previous data as we would need to delete everything every run 
-        # Data is inserted into rows of table as Unix | Value in the table corresponding to the sensor 
-        insert_query = "INSERT INTO " + str(sensor_name) + " (UNIX, VALUE) VALUES (\'" + str(data_unix) + "\', \'" + str(data_value) + "\')"
+        # Data is inserted into rows of table as sensor_name | unix | value in the table corresponding to the sensor 
+        insert_query = "INSERT INTO " + str(table_name) + " (SENSOR_NAME, UNIX, VALUE) VALUES (\'" + str(sensor_name) + "\',\'"+ str(data_unix) + "\', \'" + str(data_value) + "\')"
         #print(insert_query)
         cursor.execute(insert_query)
         conn.commit()
-        print("Successfully input " + str(data_value) + " into table " + sensor_name + ".")
+        print("Successfully input " + str(data_value) + " into table " + table_name + ".")
     except Exception as e:
         print(f"Error: {str(e)}")
         conn.rollback()
@@ -74,7 +90,7 @@ def input_to_database(sensor_name, data):
 # will fill dictionary with keys corresponding to the sensor name
 # Will fill queue in dictionary with key "sensor_name" with Data objects created from "string"
 
-def parse(string, dictionary):
+def parse(table_name, string, dictionary):
     string_split = string.split("|")
     # Extracts necessary data from the string arg & puts to lower case into Data object
     sensor_name = string_split[1].lower()
@@ -90,7 +106,7 @@ def parse(string, dictionary):
         dictionary[sensor_name] = queue
         dictionary[sensor_name].put(my_data)
     # Places parsed data into database
-    input_to_database(sensor_name, my_data)  
+    input_to_database(table_name, sensor_name, my_data)  
     return sensor_name, my_data
         
 #designed to get data from the key at dictionary. Count is the number of Data objects dequed from the queue at key of dictionary
@@ -104,7 +120,11 @@ def getData(dictionary, key, count):
             return list
     return list
         
-    
+# Stores name of the current table being operated on
+table_name = get_next_session_name()
+
+# Creates new table for each session 
+create_session_table(table_name)
     
 dictionary = {}
 ##arduino = serial.Serial(port='COM3',  baudrate=9600, timeout=.1)##Probably needs to change
@@ -127,7 +147,7 @@ while running:
     ##    line = line[2:]
     ##    line = line[:-5]
 
-    parse(line, dictionary)
+    parse(table_name, line, dictionary)
     # Arbitrary test count to simulate some data being entered to the program w/ our test string
     cnt+=1
     if cnt>5:
