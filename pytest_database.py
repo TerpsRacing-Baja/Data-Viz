@@ -47,8 +47,29 @@ conn = psycopg2.connect(**db_params)
 # Create a cursor object to interact with the database
 cursor = conn.cursor()
 
+def checkTableExists(cursor, tablename):
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM information_schema.tables
+        WHERE table_name = '{0}'
+        """.format(tablename.replace('\'', '\'\'')))
+    if cursor.fetchone()[0] == 1:
+        cursor.close()
+        return True
+
 # gets the next available session name
 def get_next_session_name():
+    print("huh")
+    
+    if(checkTableExists(cursor, "session") == None):
+        print("missing table")
+        table_name = "sessions"
+        create_table_query = f"CREATE TABLE {table_name} (session_number text, sessions integer)"
+        cursor.execute(create_table_query)
+    
+    print("woahahaha")
+    
+    
     cursor.execute("SELECT MAX(session_number) FROM sessions")
     max_session_number = cursor.fetchone()[0]
     if max_session_number is not None:
