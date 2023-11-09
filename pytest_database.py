@@ -54,17 +54,17 @@ def checkTableExists(cursor, tablename):
         WHERE table_name = '{0}'
         """.format(tablename.replace('\'', '\'\'')))
     if cursor.fetchone()[0] == 1:
-        cursor.close()
+        #cursor.close()
         return True
 
 # gets the next available session name
 def get_next_session_name():
     print("huh")
     
-    if(checkTableExists(cursor, "session") == None):
+    if(checkTableExists(cursor, "sessions") == None):
         print("missing table")
         table_name = "sessions"
-        create_table_query = f"CREATE TABLE {table_name} (session_number text, sessions integer)"
+        create_table_query = f"CREATE TABLE {table_name} (session_number integer, sessions integer)"
         cursor.execute(create_table_query)
     
     print("woahahaha")
