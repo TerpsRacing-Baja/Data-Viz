@@ -9,7 +9,7 @@ def get_db_connection():
         "host": "localhost",
         "database": "postgres",
         "user": "postgres",
-        "password": "gettr0lledA!"
+        "password": ""
     }
 
     # Establish a connection to the database
