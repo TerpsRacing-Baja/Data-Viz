@@ -64,7 +64,7 @@ def get_next_session_name():
     if(checkTableExists(cursor, "sessions") == None):
         print("missing table")
         table_name = "sessions"
-        create_table_query = f"CREATE TABLE {table_name} (session_number integer, sessions integer)"
+        create_table_query = f"CREATE TABLE {table_name} (session_number integer)"
         cursor.execute(create_table_query)
     
     print("woahahaha")

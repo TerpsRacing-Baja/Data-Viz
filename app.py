@@ -26,11 +26,26 @@ def home():
 def index():
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM books;')
+    cur.execute('SELECT * FROM sessions;')
     books = cur.fetchall()
     cur.close()
     conn.close()
     return books
+
+
+@app.route('/latest')
+def get_last():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT MAX(session_number) FROM sessions")
+    max_session_number = cur.fetchone()[0]
+    
+    
+    print(max_session_number)
+    
+    return {'latest': max_session_number}
+    
 
 @app.route('/time')
 def get_current_time():
