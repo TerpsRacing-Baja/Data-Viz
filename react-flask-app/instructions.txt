@@ -1,12 +1,16 @@
 Terminal 1:
 cd to file/api
-source venv/bin/activate (or just activate if windows)
 
 //if on linux
+(may need to $ python3 -m venv venv)
+source venv/bin/activate
 yarn start-api
 
 //this part does not work on windows yet
  (cd venv\bin && set FLASK_APP = api.py && set FLASK_ENV=development && flask run if windows)
+ $ python -m venv venv
+$ venv\Scripts\activate
+ $ pip install flask python-dotenv
 
 
 
