@@ -12,7 +12,7 @@ yarn start-api
 $ venv\Scripts\activate
  $ pip install flask python-dotenv
 
-
+make sure to gitignore venv
 
 Terminal 2:
 cd to file
