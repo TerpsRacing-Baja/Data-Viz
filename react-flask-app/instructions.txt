@@ -13,7 +13,7 @@ $ venv\Scripts\activate
  $ pip install flask python-dotenv
 
 (may need to rename api.py to app.py)
-
+$flask run
 
 
 Terminal 2:
