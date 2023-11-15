@@ -12,6 +12,8 @@ yarn start-api
 $ venv\Scripts\activate
  $ pip install flask python-dotenv
 
+(may need to rename api.py to app.py)
+
 
 
 Terminal 2:
