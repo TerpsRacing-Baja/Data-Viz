@@ -1,21 +1,25 @@
+Requirements:
+- Venv
+- PostgresSQL application
+- psycopg2 (only downloadable if you have postgres)
+- react-scripts
+
 Terminal 1:
 cd to file/api
 
-//if on linux
-(may need to $ python3 -m venv venv)
+//If on Linux
+ python3 -m venv venv
 source venv/bin/activate
 yarn start-api
 
-//this part does not work on windows yet
- (cd venv\bin && set FLASK_APP = api.py && set FLASK_ENV=development && flask run if windows)
+//If on windows
+ (cd venv\bin && set FLASK_APP = api.py && set FLASK_ENV=development && flask run if windows) (this is optional/may not change/do anything.)
  $ python -m venv venv
-$ venv\Scripts\activate
+ $ venv\Scripts\activate
  $ pip install flask python-dotenv
-
-(may need to rename api.py to app.py)
-$flask run
+ $flask run (may need to rename api.py to app.py)
 
 
 Terminal 2:
-cd to file
+cd into react-flask-app
 yarn start (may need to npm install react-scripts --save)
