@@ -4,6 +4,7 @@ Requirements:
 - psycopg2 (only downloadable if you have postgres)
 - react-scripts
 - yarn
+- flask (pip install flask python-dotenv)
 
 Terminal 1:
 cd to file/api
@@ -17,10 +18,11 @@ yarn start-api
  (cd venv\bin && set FLASK_APP = api.py && set FLASK_ENV=development && flask run if windows) (this is optional/may not change/do anything.)
  $ python -m venv venv
  $ venv\Scripts\activate
- $ pip install flask python-dotenv
+
+ cd into react-flask-app/flask
  $flask run (may need to rename api.py to app.py)
 
 
 Terminal 2:
-cd into react-flask-app
+cd into react-flask-app/react
 yarn start (may need to npm install react-scripts --save)
