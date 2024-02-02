@@ -3,6 +3,7 @@ Requirements:
 - PostgresSQL application
 - psycopg2 (only downloadable if you have postgres)
 - react-scripts
+- yarn
 
 Terminal 1:
 cd to file/api
