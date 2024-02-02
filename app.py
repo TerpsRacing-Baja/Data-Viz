@@ -9,7 +9,7 @@ def get_db_connection():
         "host": "localhost",
         "database": "postgres",
         "user": "postgres",
-        "password": ""
+        "password": "INSERT_YOUR_SQL_PASSWORD_HERE"
     }
 
     # Establish a connection to the database
@@ -19,9 +19,33 @@ def get_db_connection():
 
 @app.route('/')
 def home():
-    
     return "yeppers"
 
+@app.route('/time')
+def get_current_time():
+    return {'time': time.time()}
+
+## csv/ reprsents commands that will read from read from a csv in the "csv_directory"
+csv_directory = ""
+
+## database/ represents commands that take from the SQL database
+@app.route('/database/latest')
+def get_last():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT MAX(session_number) FROM sessions")
+    max_session_number = cur.fetchone()[0]
+    print(max_session_number)
+    
+    return {'latest': max_session_number}
+    
+
+
+
+
+
+#Test code. Taken from https://www.digitalocean.com/community/tutorials/how-to-use-a-postgresql-database-in-a-flask-application
 @app.route('/books')
 def index():
     conn = get_db_connection()
@@ -31,22 +55,3 @@ def index():
     cur.close()
     conn.close()
     return books
-
-
-@app.route('/latest')
-def get_last():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    cur.execute("SELECT MAX(session_number) FROM sessions")
-    max_session_number = cur.fetchone()[0]
-    
-    
-    print(max_session_number)
-    
-    return {'latest': max_session_number}
-    
-
-@app.route('/time')
-def get_current_time():
-    return {'time': time.time()}
