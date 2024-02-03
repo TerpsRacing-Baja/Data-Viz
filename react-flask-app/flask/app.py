@@ -109,8 +109,11 @@ def get_last():
     return {'latest': max_session_number}
     
 
-
-
+@app.route('/filter_data')
+def filter_data(data, desired_filter, column = "Sensor"):
+    final_filtered_data = data[data['sensor'] == desired_filter]
+    return final_filtered_data
+    
 
 
 #Test code. Taken from https://www.digitalocean.com/community/tutorials/how-to-use-a-postgresql-database-in-a-flask-application
