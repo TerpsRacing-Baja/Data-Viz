@@ -5,6 +5,7 @@ Requirements:
 - react-scripts
 - yarn
 - flask (pip install flask python-dotenv)
+- pandas
 
 Terminal 1:
 cd to file/api
