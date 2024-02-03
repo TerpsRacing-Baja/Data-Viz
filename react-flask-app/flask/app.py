@@ -27,6 +27,15 @@ def get_current_time():
 
 ## csv/ reprsents commands that will read from read from a csv in the "csv_directory"
 csv_directory = ""
+unix_time = 0
+@app.route('/csv/set_time')
+def set_time():
+    return unix_time
+
+@app.route('/csv/get_time')
+def get_time(new_time):
+    unix_time = new_time
+    return unix_time
 
 ## database/ represents commands that take from the SQL database
 @app.route('/database/latest')

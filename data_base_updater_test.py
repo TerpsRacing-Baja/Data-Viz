@@ -150,7 +150,7 @@ create_session_table(table_name)
 dictionary = {}
 ##arduino = serial.Serial(port='COM3',  baudrate=9600, timeout=.1)##Probably needs to change
 running = True
-dump_everything_to_csv = False
+dump_everything_to_csv = True
 cnt = 0
 
 # Grabs data from sensor and parses it.
