@@ -7,18 +7,16 @@ Requirements:
 - flask (pip install flask python-dotenv)
 - pandas
 
+#STARTING VENV IS OPTIONAL BUT PREFERED
+python3 -m venv venv
+source venv/bin/activate
+
 Terminal 1:
-cd to file/api
 
 //If on Linux
- python3 -m venv venv
-source venv/bin/activate
 yarn start-api
 
 //If on windows
- (cd venv\bin && set FLASK_APP = api.py && set FLASK_ENV=development && flask run if windows) (this is optional/may not change/do anything.)
- $ python -m venv venv
- $ venv\Scripts\activate
 
  cd into react-flask-app/flask
  $flask run (may need to rename api.py to app.py)

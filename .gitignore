@@ -1,4 +1,5 @@
 react-flask-app/api/venv
+react-flask-app/flask/venv
 react-flask-app/api/.venv
 venv/
 react-flask-app/node_modules/.cache/.eslintcache
