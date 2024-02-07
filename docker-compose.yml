@@ -1,0 +1,11 @@
+services:
+  frontend:
+    container_name: frontend 
+    image: node:lts
+    working_dir: /home/data-viz-frontend
+    entrypoint: npm run dev
+    ports:
+      - 5173:5173
+    volumes:
+      - ./data-viz-frontend/:/home/data-viz-frontend
+    tty: true
