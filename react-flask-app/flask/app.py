@@ -1,5 +1,6 @@
 import psycopg2
 from flask import Flask
+from flask import Flask, request
 import time
 import pandas as pd
 
@@ -46,14 +47,14 @@ df = None
 time_label = "Unix time"
 
 #sets the path of the csv used
-@app.route('/csv/set_path')
+@app.route('/csv/set_path/<path>')
 def set_path(path):
     global csv_directory
     csv_directory = path
     return csv_directory
 
 #must be ran before trying to read from csv
-@app.route('/csv/start_read_csv')
+@app.route('/csv/start_read_csv/<directory>')
 def start_read_csv():
     global df
     df = pd.read_csv(csv_directory)
@@ -66,14 +67,14 @@ def set_time():
     return unix_time
 
 #gets unix time
-@app.route('/csv/get_time')
+@app.route('/csv/get_time/<new_time>')
 def get_time(new_time):
     global unix_time
     unix_time = new_time
     return unix_time
 
 #increments unix time
-@app.route('/csv/increment_time')
+@app.route('/csv/increment_time/<new_time>')
 def increment_time(new_time):
     global unix_time
     unix_time = new_time+get_time()
@@ -81,10 +82,16 @@ def increment_time(new_time):
 
 
 #returns the next used time
-@app.route('/csv/get_next_time')
+@app.route('/csv/get_next_time/')
+def get_next_time_with_params():
+    increments_time = request.args.get('increments_time', False)
+    returns_error = request.args.get('returns_error', True)
+    
+    return get_next_time(increments_time, returns_error)
+
+
 def get_next_time(increments_time = False, returns_error = True):
     global unix_time
-    
     
     next_time = df[df[time_label] > unix_time][time_label].min()
    
@@ -98,7 +105,13 @@ def get_next_time(increments_time = False, returns_error = True):
     return next_time
 
 #gets all the indexes that have the same "unix time" value as unix_time 
-@app.route('/csv/get_current')
+@app.route('/csv/get_current/<desired_time>')
+def get_current_with_params(desired_time):
+    increments_time = request.args.get('increments_time', False)
+    
+    return get_current(desired_time, increments_time)
+    
+
 def get_current(desired_time, increments_time = False):
     filtered_data = df[df[time_label] == desired_time]
     
@@ -108,7 +121,11 @@ def get_current(desired_time, increments_time = False):
     return filtered_data
 
 #returns all the data from a time frame that is unix_time to unix_time+window. Will also increment the time
-@app.route('/csv/get_window')
+@app.route('/csv/get_window/<window>')
+def get_window_with_params(window):
+    increments_time = request.args.get('increments_time', False)
+    return get_current(window, increments_time)
+
 def get_window(window, increments_time = False):
     
     filtered_data = df[(df[time_label] >= unix_time) & (df[time_label] <= unix_time+window)]
