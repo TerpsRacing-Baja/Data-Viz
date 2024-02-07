@@ -47,14 +47,14 @@ df = None
 time_label = "Unix time"
 
 #sets the path of the csv used
-@app.route('/csv/set_path/<path>')
-def set_path(path):
+@app.route('/csv/set_path/<path:directory>' , methods=['POST'])
+def set_path(directory):
     global csv_directory
-    csv_directory = path
+    csv_directory = directory
     return csv_directory
 
 #must be ran before trying to read from csv
-@app.route('/csv/start_read_csv/<directory>')
+@app.route('/csv/start_read_csv')
 def start_read_csv():
     global df
     df = pd.read_csv(csv_directory)
