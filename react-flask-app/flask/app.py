@@ -20,53 +20,75 @@ def get_db_connection():
 
 @app.route('/')
 def home():
+    #df = pd.read_csv("C:/Users/Frank/Documents/GitHub/Data-Viz/senor_data/test_sensor.csv")
+    
+    print(set_path("C:/Users/Frank/Documents/GitHub/Data-Viz/react-flask-app/flask/senor_data/test_sensor.csv"))
+    print("step1")
+    print(csv_directory)
+    print("step2")
+    print(start_read_csv())
+    print()
+    print(get_next_time())
+    
+    
+    
     return "yeppers"
 
 @app.route('/time')
 def get_current_time():
     return {'time': time.time()}
 
-## csv/ reprsents commands that will read from read from a csv in the "csv_directory"
+## csv/ reprsents commands that will read from a csv in the "csv_directory"
 csv_directory = ""
 unix_time = 0
 df = None
 
-
+time_label = "Unix time"
 
 #sets the path of the csv used
 @app.route('/csv/set_path')
-def set_time(path):
+def set_path(path):
+    global csv_directory
     csv_directory = path
     return csv_directory
 
 #must be ran before trying to read from csv
-@app.rount('csv/start_read_csv')
+@app.route('/csv/start_read_csv')
 def start_read_csv():
+    global df
     df = pd.read_csv(csv_directory)
+    return df
 
 #sets unix time
 @app.route('/csv/set_time')
 def set_time():
+    global unix_time
     return unix_time
 
 #gets unix time
 @app.route('/csv/get_time')
 def get_time(new_time):
+    global unix_time
     unix_time = new_time
     return unix_time
 
 #increments unix time
 @app.route('/csv/increment_time')
 def increment_time(new_time):
-    unix_time = new_time+unix_time
+    global unix_time
+    unix_time = new_time+get_time()
     return unix_time
+
 
 #returns the next used time
 @app.route('/csv/get_next_time')
 def get_next_time(increments_time = False, returns_error = True):
-    next_time = df[df['unix time'] > unix_time]['unix time'].min()
+    global unix_time
     
-    if not pd.isna(next_time) and returns_error:
+    
+    next_time = df[df[time_label] > unix_time][time_label].min()
+   
+    if next_time is None and returns_error:
         raise ValueError("There are no more possible times avaliable")
         return -1
     
@@ -78,7 +100,7 @@ def get_next_time(increments_time = False, returns_error = True):
 #gets all the indexes that have the same "unix time" value as unix_time 
 @app.route('/csv/get_current')
 def get_current(desired_time, increments_time = False):
-    filtered_data = df[df['unix time'] == desired_time]
+    filtered_data = df[df[time_label] == desired_time]
     
     if(increments_time):
         get_next_time(increments_time = True)
@@ -89,7 +111,7 @@ def get_current(desired_time, increments_time = False):
 @app.route('/csv/get_window')
 def get_window(window, increments_time = False):
     
-    filtered_data = df[(df['unix time'] >= unix_time) & (df['unix time'] <= unix_time+window)]
+    filtered_data = df[(df[time_label] >= unix_time) & (df[time_label] <= unix_time+window)]
     
     if increments_time:
         set_time(unix_time+window)

@@ -9,7 +9,7 @@ Requirements:
 
 #STARTING VENV IS OPTIONAL BUT PREFERED
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate (venv\Scripts\activate if on windows)
 
 Terminal 1:
 
