@@ -7,10 +7,20 @@ const speedPercent = ref(100)
 </script>
 
 <template>
-    <button @click="play = !play">
-        <font-awesome-icon :icon="play ? faPlay : faPause"></font-awesome-icon>
-    </button>
-    <input v-model="speedPercent" type="range" min="0" max="200" class="slider" />
+    <div id="playback">
+        Playback Controls:
+        <button @click="play = !play">
+            <font-awesome-icon :icon="play ? faPause : faPlay"></font-awesome-icon>
+        </button>
+        <input v-model="speedPercent" type="range" min="0" max="200" class="slider" />
+    </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+#playback {
+    width: 20%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+</style>
