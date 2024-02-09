@@ -12,6 +12,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.5.1",
     "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@fortawesome/vue-fontawesome": "^3.0.6",
+    "axios": "^1.6.7",
     "ol": "^8.2.0",
     "ol-contextmenu": "^5.3.0",
     "ol-ext": "^4.0.14",

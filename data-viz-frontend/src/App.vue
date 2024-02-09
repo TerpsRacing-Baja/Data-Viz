@@ -1,9 +1,16 @@
 <script setup lang="ts">
+import Shark from './components/Shark.vue'
 import PlayPause from './components/PlayPause.vue'
 import Map from './components/Map.vue'
+
+
 </script>
 
 <template>
+  <div id="shark">
+    <Shark></Shark>
+  </div>
+
   <div id="map">
     <Map></Map>
   </div>

@@ -3,8 +3,14 @@ from flask import Flask
 from flask import Flask, request
 import time
 import pandas as pd
+from flask_cors import CORS
 
 app = Flask(__name__)
+
+app.config.from_object(__name__)
+
+CORS(app, resources={r"/*":{'origins':"*"}})
+
 
 def get_db_connection():
     db_params = {
@@ -165,3 +171,8 @@ def index():
     cur.close()
     conn.close()
     return books
+
+@app.route('/shark', methods=['GET'])
+def shark():
+    print("I have been called")
+    return("Shark!")
