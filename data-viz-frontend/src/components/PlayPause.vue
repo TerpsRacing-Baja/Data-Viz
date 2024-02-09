@@ -14,6 +14,7 @@ import { ref } from 'vue';
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faPlay, faPause } from '@fortawesome/free-solid-svg-icons'
 
+
 const play = ref(false)
 const speedPercent = ref(100)
 
