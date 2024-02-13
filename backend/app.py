@@ -1,4 +1,3 @@
-import psycopg2
 from flask import Flask
 from flask import Flask, request
 import time
@@ -159,18 +158,6 @@ def get_last():
 #    final_filtered_data = data[data['sensor'] == desired_filter]
 #    return final_filtered_data
     
-
-
-#Test code. Taken from https://www.digitalocean.com/community/tutorials/how-to-use-a-postgresql-database-in-a-flask-application
-@app.route('/books')
-def index():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM sessions;')
-    books = cur.fetchall()
-    cur.close()
-    conn.close()
-    return books
 
 @app.route('/shark', methods=['GET'])
 def shark():
