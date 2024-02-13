@@ -11,5 +11,6 @@ const emitter = mitt()
 const app = createApp(App)
 app.use(OpenLayersMap)
 
+// Everything needs a common emitter object
 app.provide('emitter', emitter);
 app.mount('#app')

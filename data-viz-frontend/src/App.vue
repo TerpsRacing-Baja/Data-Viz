@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import PlayPause from './components/PlayPause.vue'
-import Map from './components/Map.vue'
+import PlayPause from "./components/PlayPause.vue";
+import Map from "./components/Map.vue";
 </script>
 
 <template>
