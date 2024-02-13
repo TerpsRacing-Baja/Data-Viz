@@ -41,11 +41,12 @@
 
 <script setup lang="ts">
 import { inject, ref, onMounted } from "vue";
+import { EMITTER_KEY } from "../injection-keys";
 import type View from "ol/View";
 import type VectorSource from "ol/source/vector";
 import buggy from "../assets/buggy.svg";
 
-const emitter = inject("emitter");
+const emitter = inject(EMITTER_KEY);
 const viewRef = ref<{ view: View }>();
 const sourceRef = ref<{ source: VectorSource }>();
 const center = ref([-77.4, 39.6]);
@@ -63,6 +64,8 @@ onMounted(() => {
   // get a reference to OL objects so their methods can be used
   if (!viewRef.value?.view || !sourceRef.value?.source)
     throw new Error("Map references are broken, rendering stopped");
+
+  if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
   const view: View = viewRef.value?.view;
   const source: VectorSource = sourceRef.value?.source;
