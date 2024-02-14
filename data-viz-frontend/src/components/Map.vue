@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { inject, ref, onMounted } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { CAR_STATE, Events } from "../emitter-messages";
+import { CAR_STATE, Events, REVERSE_CAR } from "../emitter-messages";
 import type View from "ol/View";
 import type VectorSource from "ol/source/vector";
 import buggy from "../assets/buggy.svg";
@@ -75,7 +75,15 @@ onMounted(() => {
 
   // sets up a listener callback for car-state update
   emitter.on(CAR_STATE, (e) => handlePosUpdate(e, view, source));
+
+  emitter.on(REVERSE_CAR, () => remove());
 });
+
+function remove() {
+  for (let i = 0; i < 20; i++) {
+    path.value.pop();
+  }
+}
 
 function handlePosUpdate(
   newPos: Events["car-state"],
