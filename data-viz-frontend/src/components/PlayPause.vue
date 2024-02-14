@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, ref } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { CAR_STATE, REVERSE_CAR } from "../emitter-messages";
+import { CAR_STATE } from "../emitter-messages";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faPlay, faPause } from "@fortawesome/free-solid-svg-icons";
 import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about this, but it works so hey
@@ -12,6 +12,7 @@ const speed = ref(100);
 let play = ref(false);
 let reverse = ref(false);
 let i = 0;
+
 // console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
 
 // Right now this is just grabbing from the test data, later should go to flask
@@ -21,8 +22,16 @@ function pubData() {
 
   emitter.emit(CAR_STATE, {
     lat: csv[i]['Latitude|"Degrees"|-180.0|180.0|25'],
-    lon: csv[i++]['Longitude|"Degrees"|-180.0|180.0|25'],
+    lon: csv[i]['Longitude|"Degrees"|-180.0|180.0|25'],
+    reversing: reverse.value,
   });
+
+  if (reverse.value == false) {
+    i++;
+  } else {
+    i--;
+    i = Math.max(i, 0);
+  }
 
   waitThenPub();
 }
@@ -41,23 +50,17 @@ function toggleAndStartPub() {
   waitThenPub();
 }
 
-function Reverse() {
-  let amount = 20; //just for testing
-  i -= amount;
-  i = Math.max(0, i);
+function toggleReverse() {
+  reverse.value = !reverse.value;
 
-  if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
-
-  emitter.emit(REVERSE_CAR, {
-    amount: amount,
-  });
+  waitThenPub();
 }
 </script>
 
 <template>
   <div id="playback">
     Reverse Reverse:
-    <button @click="Reverse()">
+    <button @click="toggleReverse()">
       <font-awesome-icon :icon="reverse ? faPause : faPlay"></font-awesome-icon>
     </button>
     Playback Controls:
