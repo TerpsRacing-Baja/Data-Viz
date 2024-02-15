@@ -88,8 +88,8 @@ function handlePosUpdate(
   curr.value = [newPos["lon"], newPos["lat"]];
   let reversing = newPos["reversing"];
 
+  // 0, 0 is "null island", somewhere in international waters .. this is a safe initial state flag
   if (path.value[0][0][0] == 0 && path.value[0][0][1] == 0) {
-    // 0, 0 is "null island", somewhere in international waters .. this is a safe initial state flag
     path.value = [[curr.value]];
   } else {
     if (!reversing) {
@@ -97,7 +97,9 @@ function handlePosUpdate(
         path.value.slice(-1)[path.value.slice(-1).length - 1].slice(-1)[0],
         curr.value,
       ]); // this mess is so that we have an array of pairs of latlons
-    } else {
+    }
+    // if we remove everything in reverse it breaks other logic
+    else if (path.value.length > 1) {
       path.value.pop();
     }
 
