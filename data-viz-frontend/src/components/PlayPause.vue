@@ -25,6 +25,8 @@ function pubData() {
     lon: csv[i]['Longitude|"Degrees"|-180.0|180.0|25'],
     reversing: reverse.value,
   });
+  
+  reverse.value = (speed.value< 0);
 
   if (reverse.value == false) {
     i++;
@@ -39,7 +41,7 @@ function pubData() {
 // Mutual recursion through setTimeout, needed to allow for control flow
 function waitThenPub() {
   if (play.value) {
-    setTimeout(pubData, 200 - speed.value); // So bar to the left is slower, right is faster
+    setTimeout(pubData, 200 - Math.abs(speed.value)); // So bar to the left is slower, right is faster
   }
 }
 
@@ -49,25 +51,16 @@ function toggleAndStartPub() {
 
   waitThenPub();
 }
-
-function toggleReverse() {
-  reverse.value = !reverse.value;
-
-  waitThenPub();
-}
 </script>
 
 <template>
   <div id="playback">
-    Reverse Reverse:
-    <button @click="toggleReverse()">
-      <font-awesome-icon :icon="reverse ? faPause : faPlay"></font-awesome-icon>
-    </button>
-    Playback Controls:
+    Playback Speed:
     <button @click="toggleAndStartPub()">
       <font-awesome-icon :icon="play ? faPause : faPlay"></font-awesome-icon>
     </button>
-    <input v-model="speed" type="range" min="0" max="200" class="slider" />
+    <input v-model="speed" type="range" min="-200" max="200" class="slider" />
+    <label>Speed: {{ speed }}</label>
   </div>
 </template>
 
