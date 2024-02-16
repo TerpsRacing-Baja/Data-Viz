@@ -8,16 +8,18 @@ import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about t
 
 const emitter = inject(EMITTER_KEY);
 const speed = ref(100);
+const time = ref(100);
 
 let play = ref(false);
 let reverse = ref(false);
 let i = 0;
+let csv_length = csv.length-2;
 
 // console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
 
 // Right now this is just grabbing from the test data, later should go to flask
-function pubData() {
-  if (i > 5612) i = 0; // because we are using this only for teting
+function pubData(recursive = true) {
+  if (i > csv_length) i = 0; // because we are using this only for teting
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
   emitter.emit(CAR_STATE, {
@@ -26,21 +28,27 @@ function pubData() {
     reversing: reverse.value,
   });
   
-  reverse.value = (speed.value< 0);
+  
 
   if (reverse.value == false) {
     i++;
+    
   } else {
     i--;
+    
     i = Math.max(i, 0);
   }
-
-  waitThenPub();
+  
+  if (recursive){
+    time.value = i;
+    waitThenPub();
+  }
 }
 
 // Mutual recursion through setTimeout, needed to allow for control flow
 function waitThenPub() {
   if (play.value) {
+    reverse.value = (speed.value< 0);
     setTimeout(pubData, 200 - Math.abs(speed.value)); // So bar to the left is slower, right is faster
   }
 }
@@ -51,10 +59,33 @@ function toggleAndStartPub() {
 
   waitThenPub();
 }
+
+function scrub(){
+  play.value = false; //stop playing when touching scrub bar. Done to avoid any complications
+  
+  while (i!= time.value){
+    console.log("hello", time.value);
+    console.log(i);
+    if(i > time.value){
+      console.log("please reverse");
+     
+      reverse.value = true;
+      pubData(false)
+    }
+    if(i<time.value){
+      console.log("please go");
+      
+      reverse.value = false;
+      pubData(false)
+    }
+  }
+}
 </script>
 
 <template>
   <div id="playback">
+    Scrub a dub dub:
+    <input v-model="time" type="range" min="0" :max="csv_length" class="slider" @input="scrub"  />
     Playback Speed:
     <button @click="toggleAndStartPub()">
       <font-awesome-icon :icon="play ? faPause : faPlay"></font-awesome-icon>
