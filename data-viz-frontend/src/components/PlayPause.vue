@@ -13,7 +13,7 @@ const time = ref(100);
 let play = ref(false);
 let reverse = ref(false);
 let i = 0;
-let csv_length = csv.length-2;
+let csv_length = csv.length-1;
 
 // console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
 
@@ -93,7 +93,8 @@ function scrub(){
       <font-awesome-icon :icon="play ? faPause : faPlay"></font-awesome-icon>
     </button>
     <input v-model="speed" type="range" min="-200" max="200" class="slider" />
-    <label>Speed: {{ speed }}</label>
+    <label>Speed: x{{ speed/200 }}</label>
+    <label>Time: {{ time/100 }} seconds</label>
   </div>
 </template>
 
