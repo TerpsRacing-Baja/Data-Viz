@@ -20,15 +20,15 @@ function pubData() {
   if (i > 5612) i = 0; // because we are using this only for teting
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
+  reverse.value = speed.value < 0;
+
   emitter.emit(CAR_STATE, {
     lat: csv[i]['Latitude|"Degrees"|-180.0|180.0|25'],
     lon: csv[i]['Longitude|"Degrees"|-180.0|180.0|25'],
     reversing: reverse.value,
   });
-  
-  reverse.value = (speed.value< 0);
 
-  if (reverse.value == false) {
+  if (!reverse.value) {
     i++;
   } else {
     i--;
@@ -41,7 +41,10 @@ function pubData() {
 // Mutual recursion through setTimeout, needed to allow for control flow
 function waitThenPub() {
   if (play.value) {
-    setTimeout(pubData, 200 - Math.abs(speed.value)); // So bar to the left is slower, right is faster
+    // If speed is not 0, go pub with appropriate delay, but if it is periodically check until it changes
+    // The delay on the else is required to avoid overloading browser with recursive calls
+    if (speed.value != 0) setTimeout(pubData, 200 - Math.abs(speed.value));
+    else setTimeout(waitThenPub, 100);
   }
 }
 
