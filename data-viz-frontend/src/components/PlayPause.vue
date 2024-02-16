@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, ref } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { CAR_STATE } from "../emitter-messages";
+import { PLAYBACK_UPDATE } from "../emitter-messages";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faPlay, faPause } from "@fortawesome/free-solid-svg-icons";
 import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about this, but it works so hey
@@ -22,7 +22,7 @@ function pubData() {
 
   reverse.value = speed.value < 0;
 
-  emitter.emit(CAR_STATE, {
+  emitter.emit(PLAYBACK_UPDATE, {
     lat: csv[i]['Latitude|"Degrees"|-180.0|180.0|25'],
     lon: csv[i]['Longitude|"Degrees"|-180.0|180.0|25'],
     reversing: reverse.value,

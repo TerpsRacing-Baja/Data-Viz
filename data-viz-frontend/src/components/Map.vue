@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { inject, ref, onMounted } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { CAR_STATE, Events } from "../emitter-messages";
+import { PLAYBACK_UPDATE, Events } from "../emitter-messages";
 import type View from "ol/View";
 import type VectorSource from "ol/source/vector";
 import buggy from "../assets/buggy.svg";
@@ -74,11 +74,11 @@ onMounted(() => {
   const source: VectorSource = sourceRef.value?.source;
 
   // sets up a listener callback for car-state update
-  emitter.on(CAR_STATE, (e) => handlePosUpdate(e, view, source));
+  emitter.on(PLAYBACK_UPDATE, (e) => handlePosUpdate(e, view, source));
 });
 
 function handlePosUpdate(
-  newPos: Events["car-state"],
+  newPos: Events["playback-update"],
   view: View,
   source: VectorSource
 ) {
