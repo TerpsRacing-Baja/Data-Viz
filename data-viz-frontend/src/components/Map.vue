@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { inject, ref, onMounted } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { CAR_STATE, Events } from "../emitter-messages";
+import { PLAYBACK_UPDATE, Events } from "../emitter-messages";
 import type View from "ol/View";
 import type VectorSource from "ol/source/vector";
 import buggy from "../assets/buggy.svg";
@@ -74,11 +74,11 @@ onMounted(() => {
   const source: VectorSource = sourceRef.value?.source;
 
   // sets up a listener callback for car-state update
-  emitter.on(CAR_STATE, (e) => handlePosUpdate(e, view, source));
+  emitter.on(PLAYBACK_UPDATE, (e) => handlePosUpdate(e, view, source));
 });
 
 function handlePosUpdate(
-  newPos: Events["car-state"],
+  newPos: Events["playback-update"],
   view: View,
   source: VectorSource
 ) {
@@ -86,15 +86,23 @@ function handlePosUpdate(
 
   // Update position for the icon and add to the multilinestring array nesting
   curr.value = [newPos["lon"], newPos["lat"]];
+  let reversing = newPos["reversing"];
 
+  // 0, 0 is "null island", somewhere in international waters .. this is a safe initial state flag
   if (path.value[0][0][0] == 0 && path.value[0][0][1] == 0) {
-    // 0, 0 is "null island", somewhere in international waters .. this is a safe initial state flag
     path.value = [[curr.value]];
   } else {
-    path.value.push([
-      path.value.slice(-1)[path.value.slice(-1).length - 1].slice(-1)[0],
-      curr.value,
-    ]); // this mess is so that we have an array of pairs of latlons
+    if (!reversing) {
+      path.value.push([
+        path.value.slice(-1)[path.value.slice(-1).length - 1].slice(-1)[0],
+        curr.value,
+      ]); // this mess is so that we have an array of pairs of latlons
+    }
+    // if we remove everything in reverse it breaks other logic
+    else if (path.value.length > 1) {
+      path.value.pop();
+    }
+
     // A nice-to-have, zooms the map in on the path, updating ever time the path changes
     view.fit(source.getExtent(), { padding: [50, 50, 50, 50] });
   }
