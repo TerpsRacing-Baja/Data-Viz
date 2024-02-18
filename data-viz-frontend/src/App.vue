@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PlaybackControl from "./components/PlaybackControl.vue";
 import Map from "./components/Map.vue";
+import Vectors from "./components/VelAccel.vue";
 </script>
 
 <template>
@@ -12,6 +13,11 @@ import Map from "./components/Map.vue";
 
   <div id="widgets">
     <PlaybackControl></PlaybackControl>
+  </div>
+  <div id="vfill" />
+
+  <div id="widgets">
+    <Vectors></Vectors>
   </div>
 </template>
 
