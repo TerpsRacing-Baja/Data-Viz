@@ -64,16 +64,12 @@ function scrub(){
   play.value = false; //stop playing when touching scrub bar. Done to avoid any complications
   
   while (i!= time.value){
-    console.log("hello", time.value);
-    console.log(i);
     if(i > time.value){
-      console.log("please reverse");
      
       reverse.value = true;
       pubData(false)
     }
     if(i<time.value){
-      console.log("please go");
       
       reverse.value = false;
       pubData(false)
