@@ -29,6 +29,19 @@ onMounted(() => {
   emitter?.emit(PLAYBACK_UPDATE, { index: 0 }); // centers view on first index. view.fit will complain but this works
 });
 
+onMounted(() => {
+  let coords: [number, number][] = [];
+
+  for (let j = 0; j < csv.length; j++) {
+    coords.push([
+      csv[j]['Longitude|"Degrees"|-180.0|180.0|25'],
+      csv[j]['Latitude|"Degrees"|-180.0|180.0|25'],
+    ]);
+  }
+
+  emitter?.emit(GPS_DATA, { coords: coords });
+});
+
 // console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
 
 function iterateAndPub() {
