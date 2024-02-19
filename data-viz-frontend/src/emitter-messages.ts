@@ -1,7 +1,10 @@
 // Mostly for documentation purposes
-export const CAR_STATE = "car-state";
+export const PLAYBACK_UPDATE = "playback-update";
+export const GPS_DATA = "gps-data";
 
 // This specifies the types of events we emit, note the optional flag b/c there could be one of several type
 export type Events = {
-  "car-state"?: { lat: number; lon: number; reversing: boolean };
+
+  "playback-update"?: { index: number };
+  "gps-data"?: { coords: [number, number][] };
 };
