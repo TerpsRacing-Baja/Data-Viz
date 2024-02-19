@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, GPS_DATA } from "../emitter-messages";
+import { PLAYBACK_UPDATE, GPS_DATA, CAR_SPEED } from "../emitter-messages";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faPlay, faPause } from "@fortawesome/free-solid-svg-icons";
 import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about this, but it works so hey
