@@ -41,6 +41,7 @@ function iterateAndPub() {
   });
   
   
+  time.value = i;
 
 
   // controls direction of index change
@@ -78,20 +79,14 @@ function toggleAndStartPub() {
 }
 
 function scrub(){
-  play.value = false; //stop playing when touching scrub bar. Done to avoid any complications
-  
-  while (i!= time.value){
-    if(i > time.value){
-     
-      reverse.value = true;
-      pubData(false)
-    }
-    if(i<time.value){
-      
-      reverse.value = false;
-      pubData(false)
-    }
-  }
+  play.value = false; //stop playing when touching scrub bar due to odd behavior
+  if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
+
+  emitter.emit(PLAYBACK_UPDATE, {
+    index: time.value,
+
+  });
+  i = time.value;
 }
 </script>
 

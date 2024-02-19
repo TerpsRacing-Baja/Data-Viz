@@ -96,7 +96,6 @@ function handlePosUpdate(
   if (i < 0 || i > coords.length) throw new Error("Index update out of bounds");
 
   // Update position for the icon and add to the multilinestring array nesting
-
   curr.value = coords[newIndex["index"]];
 
   // Should scale if we want to jump index, can add or remove path as required
