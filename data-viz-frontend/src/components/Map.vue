@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { inject, ref, onMounted } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, Events } from "../emitter-messages";
+import { PLAYBACK_UPDATE, Events, GPS_DATA } from "../emitter-messages";
 import type View from "ol/View";
 import type VectorSource from "ol/source/vector";
 import buggy from "../assets/buggy.svg";
@@ -63,6 +63,9 @@ const path = ref<([[number, number]] | [[number, number], [number, number]])[]>(
 );
 const curr = ref<[number, number]>([0, 0]);
 
+let coords: [number, number][];
+let i = 0;
+
 onMounted(() => {
   // get a reference to OL objects so their methods can be used
   if (!viewRef.value?.view || !sourceRef.value?.source)
@@ -73,38 +76,42 @@ onMounted(() => {
   const view: View = viewRef.value?.view;
   const source: VectorSource = sourceRef.value?.source;
 
-  // sets up a listener callback for car-state update
+  // sets up listener callbacks
+  emitter.on(GPS_DATA, (e) => handleGPSData(e));
   emitter.on(PLAYBACK_UPDATE, (e) => handlePosUpdate(e, view, source));
 });
 
+function handleGPSData(gps: Events["gps-data"]) {
+  if (!gps) throw new Error("Empty GPS update!");
+
+  coords = gps["coords"];
+}
+
 function handlePosUpdate(
-  newPos: Events["playback-update"],
+  newIndex: Events["playback-update"],
   view: View,
   source: VectorSource
 ) {
-  if (!newPos) throw new Error("Position update to map was empty!");
+  if (!newIndex) throw new Error("Index update to map was empty!");
+  if (i < 0 || i > coords.length) throw new Error("Index update out of bounds");
 
   // Update position for the icon and add to the multilinestring array nesting
-  curr.value = [newPos["lon"], newPos["lat"]];
-  let reversing = newPos["reversing"];
+  curr.value = coords[newIndex["index"]];
 
-  // 0, 0 is "null island", somewhere in international waters .. this is a safe initial state flag
-  if (path.value[0][0][0] == 0 && path.value[0][0][1] == 0) {
-    path.value = [[curr.value]];
-  } else {
-    if (!reversing) {
-      path.value.push([
-        path.value.slice(-1)[path.value.slice(-1).length - 1].slice(-1)[0],
-        curr.value,
-      ]); // this mess is so that we have an array of pairs of latlons
-    }
-    // if we remove everything in reverse it breaks other logic
-    else if (path.value.length > 1) {
-      path.value.pop();
-    }
+  // Should scale if we want to jump index, can add or remove path as required
+  // Sneaky since there's a builtin if
+  for (let j = i + 1; j <= newIndex["index"]; j++)
+    path.value.push([path.value.slice(-1)[0].slice(-1)[0], coords[j]]);
 
-    // A nice-to-have, zooms the map in on the path, updating ever time the path changes
-    view.fit(source.getExtent(), { padding: [50, 50, 50, 50] });
-  }
+  for (let j = i - 1; j >= newIndex["index"]; j--) path.value.pop();
+
+  // Special case for index 0 to clear initial value
+  if (newIndex["index"] == 0) path.value = [[coords[0]]];
+
+  // Update for next time
+  i = newIndex["index"];
+
+  // A nice-to-have, zooms the map in on the path, updating ever time the path changes
+  view.fit(source.getExtent(), { padding: [50, 50, 50, 50] });
 }
 </script>
