@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { inject, ref } from "vue";
+import { inject, onMounted, ref } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE } from "../emitter-messages";
+import { PLAYBACK_UPDATE, GPS_DATA } from "../emitter-messages";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faPlay, faPause } from "@fortawesome/free-solid-svg-icons";
 import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about this, but it works so hey
@@ -15,43 +15,53 @@ let reverse = ref(false);
 let i = 0;
 let csv_length = csv.length-1;
 
+onMounted(() => {
+  let coords: [number, number][] = [];
+
+  for (let j = 0; j < csv.length; j++) {
+    coords.push([
+      csv[j]['Longitude|"Degrees"|-180.0|180.0|25'],
+      csv[j]['Latitude|"Degrees"|-180.0|180.0|25'],
+    ]);
+  }
+
+  emitter?.emit(GPS_DATA, { coords: coords });
+});
+
 // console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
 
-// Right now this is just grabbing from the test data, later should go to flask
-function pubData(recursive = true) {
-  if (i > csv_length) i = 0; // because we are using this only for teting
+function iterateAndPub() {
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
-  reverse.value = speed.value < 0;
-
+  // so that 0 goes out at the beginning
   emitter.emit(PLAYBACK_UPDATE, {
-    lat: csv[i]['Latitude|"Degrees"|-180.0|180.0|25'],
-    lon: csv[i]['Longitude|"Degrees"|-180.0|180.0|25'],
-    reversing: reverse.value,
+    index: i,
   });
   
   
 
-  if (!reverse.value) {
-    i++;
-    
-  } else {
-    i--;
-    
-    i = Math.max(i, 0);
-  }
-  
-  if (recursive){
-    time.value = i;
-    waitThenPub();
-  }
+  // controls direction of index change
+  reverse.value = speed.value < 0;
+
+  // change index accordingly
+  if (reverse.value) i--;
+  else i++;
+
+  // this could also wrap around, but caps make things easier, kind of make more sense in the context of playback
+  if (i >= csv.length) i = csv.length - 1;
+  if (i < 0) i = 0;
+
+  waitThenPub();
 }
 
 // Mutual recursion through setTimeout, needed to allow for control flow
 function waitThenPub() {
   if (play.value) {
-    reverse.value = (speed.value< 0);
-    setTimeout(pubData, 200 - Math.abs(speed.value)); // So bar to the left is slower, right is faster
+    // If speed is not 0, go pub with appropriate delay, but if it is periodically check until it changes
+    // The delay on the else is required to avoid overloading browser with recursive calls
+    if (speed.value != 0)
+      setTimeout(iterateAndPub, 200 - Math.abs(speed.value));
+    else setTimeout(waitThenPub, 100);
   }
 }
 
