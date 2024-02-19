@@ -8,10 +8,13 @@ import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about t
 
 const emitter = inject(EMITTER_KEY);
 const speed = ref(100);
+const time = ref(100);
 
 let play = ref(false);
 let reverse = ref(false);
 let i = 0;
+let csv_length = csv.length-1;
+
 
 onMounted(() => {
   let coords: [number, number][] = [];
@@ -34,7 +37,11 @@ function iterateAndPub() {
   // so that 0 goes out at the beginning
   emitter.emit(PLAYBACK_UPDATE, {
     index: i,
+
   });
+  
+  
+
 
   // controls direction of index change
   reverse.value = speed.value < 0;
@@ -48,11 +55,13 @@ function iterateAndPub() {
   if (i < 0) i = 0;
 
   waitThenPub();
+
 }
 
 // Mutual recursion through setTimeout, needed to allow for control flow
 function waitThenPub() {
   if (play.value) {
+
     // If speed is not 0, go pub with appropriate delay, but if it is periodically check until it changes
     // The delay on the else is required to avoid overloading browser with recursive calls
     if (speed.value != 0)
@@ -67,16 +76,38 @@ function toggleAndStartPub() {
 
   waitThenPub();
 }
+
+function scrub(){
+  play.value = false; //stop playing when touching scrub bar. Done to avoid any complications
+  
+  while (i!= time.value){
+    if(i > time.value){
+     
+      reverse.value = true;
+      pubData(false)
+    }
+    if(i<time.value){
+      
+      reverse.value = false;
+      pubData(false)
+    }
+  }
+}
 </script>
 
 <template>
   <div id="playback">
-    Playback Speed:
+
+    <label>Scrub a dub dub: {{ time/100 }} seconds</label>
+    <input v-model="time" type="range" min="0" :max="csv_length" class="slider" @input="scrub"  />
+    <label>Speed: x{{ speed/200 }}</label>
+    
+    <input v-model="speed" type="range" min="-200" max="200" class="slider" />
+    
     <button @click="toggleAndStartPub()">
       <font-awesome-icon :icon="play ? faPause : faPlay"></font-awesome-icon>
     </button>
-    <input v-model="speed" type="range" min="-200" max="200" class="slider" />
-    <label>Speed: {{ speed }}</label>
+   
   </div>
 </template>
 
