@@ -81,7 +81,7 @@ function scrub(){
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
   emitter.emit(PLAYBACK_UPDATE, {
-    index: time.value-1,
+    index: Math.max(time.value-1,0),
 
   });
   i = time.value;
