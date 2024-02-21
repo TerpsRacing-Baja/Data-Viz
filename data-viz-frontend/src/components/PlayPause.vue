@@ -8,7 +8,7 @@ import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about t
 
 const emitter = inject(EMITTER_KEY);
 const speed = ref(100);
-const time = ref(100);
+const time = ref(0);
 
 let play = ref(false);
 let reverse = ref(false);
@@ -27,6 +27,9 @@ onMounted(() => {
   }
 
   emitter?.emit(GPS_DATA, { coords: coords });
+  
+  emitter?.emit(PLAYBACK_UPDATE, { index: 0 });
+  
 });
 
 // console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
@@ -83,7 +86,7 @@ function scrub(){
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
   emitter.emit(PLAYBACK_UPDATE, {
-    index: time.value,
+    index: time.value-1,
 
   });
   i = time.value;
