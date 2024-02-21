@@ -27,9 +27,8 @@ onMounted(() => {
   }
 
   emitter?.emit(GPS_DATA, { coords: coords });
-  
-  emitter?.emit(PLAYBACK_UPDATE, { index: 0 });
-  
+  emitter?.emit(PLAYBACK_UPDATE, { index: 0 });//centers view on first index. view.fit will complain but this works
+
 });
 
 // console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
@@ -86,7 +85,7 @@ function scrub(){
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
   emitter.emit(PLAYBACK_UPDATE, {
-    index: Math.max(time.value-1,0),
+    index: Math.max(time.value,0),
 
   });
   i = time.value;
