@@ -89,8 +89,9 @@ function scrub(){
 
 <template>
   <div id="playback">
-    <label>Scrub a dub dub: {{ time/100 }} seconds</label>
-    <input v-model="time" type="range" min="0" :max="csv_length" class="slider" @input="scrub"  />
+
+    <label>Scrub a dub dub: {{ time/2.5 }} seconds</label>
+    <input v-model="time" type="range" min="1" :max="csv_length" class="slider" @input="scrub"  />
     <label>Speed: x{{ speed/200 }}</label>
     
     <input v-model="speed" type="range" min="-200" max="200" class="slider" />
