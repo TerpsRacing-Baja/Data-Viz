@@ -9,7 +9,6 @@ let acceleration = ref(0);
 
 onMounted(() => {
   // get a reference to OL objects so their methods can be used
-
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
   // sets up a listener callback for car-state update
@@ -22,6 +21,7 @@ function handleSpeedUpdate(
   if (!newSpeed) throw new Error("Speeds given was empty!");
   speed.value = newSpeed["velocity"]
   acceleration.value = newSpeed["acceleration"]
+
 
 }
 </script>

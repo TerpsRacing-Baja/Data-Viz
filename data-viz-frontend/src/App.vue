@@ -14,6 +14,7 @@ import Vectors from "./components/VelAccel.vue";
   <div id="widgets">
     <PlaybackControl></PlaybackControl>
   </div>
+  
   <div id="vfill" />
 
   <div id="widgets">
