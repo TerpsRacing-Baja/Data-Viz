@@ -96,6 +96,11 @@ function scrub() {
   });
 
   i = time.value;
+
+  emitter.emit(CAR_SPEED, {
+    velocity: csv[i]['Speed|"mph"|0.0|150.0|25'],
+    acceleration: 1,//csv[i][],
+  });
 }
 </script>
 
