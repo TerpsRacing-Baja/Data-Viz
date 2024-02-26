@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import PlayPause from "./components/PlayPause.vue";
+import PlaybackControl from "./components/PlaybackControl.vue";
 import Map from "./components/Map.vue";
 </script>
 
@@ -11,7 +11,7 @@ import Map from "./components/Map.vue";
   <div id="vfill" />
 
   <div id="widgets">
-    <PlayPause></PlayPause>
+    <PlaybackControl></PlaybackControl>
   </div>
 </template>
 

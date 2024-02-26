@@ -101,7 +101,7 @@ function handlePosUpdate(
   // Should scale if we want to jump index, can add or remove path as required
   // Sneaky since there's a builtin if
   for (let j = i + 1; j <= newIndex["index"]; j++)
-    path.value.push([coords[j-1], coords[j]]);
+    path.value.push([coords[j - 1], coords[j]]);
 
   for (let j = i - 1; j >= newIndex["index"]; j--) path.value.pop();
 

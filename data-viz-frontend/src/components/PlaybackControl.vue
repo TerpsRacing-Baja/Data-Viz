@@ -13,7 +13,7 @@ const time = ref(0);
 let play = ref(false);
 let reverse = ref(false);
 let i = 0;
-let csv_length = csv.length-1;
+let csv_length = csv.length - 1;
 
 onMounted(() => {
   let coords: [number, number][] = [];
@@ -38,7 +38,7 @@ function iterateAndPub() {
   emitter.emit(PLAYBACK_UPDATE, {
     index: i,
   });
-  
+
   time.value = i;
 
   // controls direction of index change
@@ -62,7 +62,6 @@ function waitThenPub() {
     // The delay on the else is required to avoid overloading browser with recursive calls
     if (speed.value != 0)
       setTimeout(iterateAndPub, 200 - Math.abs(speed.value));
-
     else setTimeout(waitThenPub, 100);
   }
 }
@@ -74,13 +73,13 @@ function toggleAndStartPub() {
   waitThenPub();
 }
 
-function scrub(){
+function scrub() {
   play.value = false; //stop playing when touching scrub bar due to odd behavior
 
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
   emitter.emit(PLAYBACK_UPDATE, {
-    index: Math.max(time.value,0),
+    index: Math.max(time.value, 0),
   });
 
   i = time.value;
@@ -89,17 +88,22 @@ function scrub(){
 
 <template>
   <div id="playback">
+    <label>Scrub a dub dub: {{ time / 2.5 }} seconds</label>
+    <input
+      v-model="time"
+      type="range"
+      min="1"
+      :max="csv_length"
+      class="slider"
+      @input="scrub"
+    />
+    <label>Speed: x{{ speed / 200 }}</label>
 
-    <label>Scrub a dub dub: {{ time/2.5 }} seconds</label>
-    <input v-model="time" type="range" min="1" :max="csv_length" class="slider" @input="scrub"  />
-    <label>Speed: x{{ speed/200 }}</label>
-    
     <input v-model="speed" type="range" min="-200" max="200" class="slider" />
-    
+
     <button @click="toggleAndStartPub()">
       <font-awesome-icon :icon="play ? faPause : faPlay"></font-awesome-icon>
     </button>
-   
   </div>
 </template>
 
