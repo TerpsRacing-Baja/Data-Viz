@@ -26,8 +26,7 @@ onMounted(() => {
   }
 
   emitter?.emit(GPS_DATA, { coords: coords });
-  emitter?.emit(PLAYBACK_UPDATE, { index: 0 });//centers view on first index. view.fit will complain but this works
-
+  emitter?.emit(PLAYBACK_UPDATE, { index: 0 }); // centers view on first index. view.fit will complain but this works
 });
 
 // console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
@@ -39,7 +38,6 @@ function iterateAndPub() {
   emitter.emit(PLAYBACK_UPDATE, {
     index: i,
   });
-  
   
   time.value = i;
 
@@ -64,6 +62,7 @@ function waitThenPub() {
     // The delay on the else is required to avoid overloading browser with recursive calls
     if (speed.value != 0)
       setTimeout(iterateAndPub, 200 - Math.abs(speed.value));
+
     else setTimeout(waitThenPub, 100);
   }
 }
@@ -77,12 +76,13 @@ function toggleAndStartPub() {
 
 function scrub(){
   play.value = false; //stop playing when touching scrub bar due to odd behavior
+
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
   emitter.emit(PLAYBACK_UPDATE, {
     index: Math.max(time.value,0),
-
   });
+
   i = time.value;
 }
 </script>
