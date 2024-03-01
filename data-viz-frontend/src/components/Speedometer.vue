@@ -20,7 +20,6 @@
   ){
     if (!newSpeed) throw new Error("Speeds given was empty!");
     speed.value = newSpeed["velocity"]
-    acceleration.value = newSpeed["acceleration"]
   }
   
   </script>

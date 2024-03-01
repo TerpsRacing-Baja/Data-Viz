@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import PlaybackControl from "./components/PlaybackControl.vue";
 import Map from "./components/Map.vue";
-import Vectors from "./components/VelAccel.vue";
+import Speedometer from "./components/Speedometer.vue";
 </script>
 
 <template>
+  
   <div id="map">
     <Map></Map>
   </div>
@@ -12,14 +13,16 @@ import Vectors from "./components/VelAccel.vue";
   <div id="vfill" />
 
   <div id="widgets">
+    <Speedometer></Speedometer>
+  </div>
+
+  <div id="widgets">
     <PlaybackControl></PlaybackControl>
   </div>
   
-  <div id="vfill" />
+  
 
-  <div id="widgets">
-    <Vectors></Vectors>
-  </div>
+  
 </template>
 
 <style scoped>

@@ -58,8 +58,7 @@ function iterateAndPub() {
   });
 
   emitter.emit(CAR_SPEED, {
-    velocity: csv[i]['Speed|"mph"|0.0|150.0|25'],
-    acceleration: 1,//csv[i][],
+    velocity: csv[i]['Speed|"mph"|0.0|150.0|25']
   });
 
   time.value = i;
@@ -109,7 +108,6 @@ function scrub() {
 
   emitter.emit(CAR_SPEED, {
     velocity: csv[i]['Speed|"mph"|0.0|150.0|25'],
-    acceleration: 1,//csv[i][],
   });
 }
 </script>

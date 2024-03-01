@@ -9,5 +9,5 @@ export const GPS_DATA = "gps-data";
 export type Events = {
   "playback-update"?: { index: number };
   "gps-data"?: { coords: [number, number][] };
-  "car-speeds"?: { velocity: number; acceleration: number };
+  "car-speeds"?: { velocity: number };
 };
