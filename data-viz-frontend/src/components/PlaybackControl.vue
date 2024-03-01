@@ -26,7 +26,10 @@ onMounted(() => {
   }
 
   emitter?.emit(GPS_DATA, { coords: coords });
-  emitter?.emit(PLAYBACK_UPDATE, { index: 0 }); // centers view on first index. view.fit will complain but this works
+  try {
+    emitter?.emit(PLAYBACK_UPDATE, { index: 0 });//centers view on first index. view.fit will complain but this works
+  } catch (error) {console.error("Cannot fit empty extent provided as `geometry`")}
+
 });
 
 onMounted(() => {
@@ -40,6 +43,8 @@ onMounted(() => {
   }
 
   emitter?.emit(GPS_DATA, { coords: coords });
+
+  
 });
 
 // console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
@@ -50,6 +55,11 @@ function iterateAndPub() {
   // so that 0 goes out at the beginning
   emitter.emit(PLAYBACK_UPDATE, {
     index: i,
+  });
+
+  emitter.emit(CAR_SPEED, {
+    velocity: csv[i]['Speed|"mph"|0.0|150.0|25'],
+    acceleration: 1,//csv[i][],
   });
 
   time.value = i;
@@ -116,9 +126,6 @@ function scrub() {
       @input="scrub"
     />
 
-    <label>Scrub a dub dub: {{ time/2.5 }} seconds</label>
-    <input v-model="time" type="range" min="1" :max="csv_length" class="slider" @input="scrub"  />
-   
     <label>Speed: x{{ speed/200 }}</label>
     <input v-model="speed" type="range" min="-200" max="200" class="slider" />
 
