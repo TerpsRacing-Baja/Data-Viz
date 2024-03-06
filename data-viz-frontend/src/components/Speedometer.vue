@@ -1,17 +1,14 @@
-    <script setup lang="ts">
+<script setup lang="ts">
   import { inject, ref, onMounted } from "vue";
   import { EMITTER_KEY } from "../injection-keys";
   import { CAR_SPEED, Events } from "../emitter-messages";
   const emitter = inject(EMITTER_KEY);
   
   let speed = ref(0);
-  let acceleration = ref(0);
   
   onMounted(() => {
-    // get a reference to OL objects so their methods can be used
-    if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
+    if (!emitter) throw new Error("Toplevel failed to provide emitter");
   
-    // sets up a listener callback for car-state update
     emitter.on(CAR_SPEED, (e) => handleSpeedUpdate(e));
   });
   
@@ -21,49 +18,60 @@
     if (!newSpeed) throw new Error("Speeds given was empty!");
     speed.value = newSpeed["velocity"]
   }
-  
-  </script>
+</script>
 
 <template>
-    <div class="speedometer">
-      <div class="speedometer-container">
-        <div class="speedometer-arrow" :style="{ transform: 'rotate(' + (speed * 9 + 270 )  + 'deg)' }"></div>
-      </div>
-      <div class="speedometer-reading">{{ speed }} km/h</div>
+  <div class="speedometer">
+    <div class="speedometer-container">
+      <div class="speedometer-background"></div> <!-- New div for the background -->
+      <div class="speedometer-arrow" :style="{ transform: 'rotate(' + (speed * 6.8 + 220 )  + 'deg)' }"></div>
     </div>
-  </template>
-  
-  <style scoped>
-  .speedometer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .speedometer-container {
-    position: relative;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background-color: #f0f0f0;
-  }
-  
-  .speedometer-arrow {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 2px;
-    height: 80px;
-    background-color: #3498db;
-    transform-origin: bottom;
-    transform: translate(-50%, -100%);
-  }
-  
-  .speedometer-reading {
-    margin-top: 10px;
-    font-size: 24px;
-    color: #333;
-  }
-  </style>
-  
+    <div class="speedometer-reading">{{ speed }} mph</div>
+  </div>
+</template>
+
+<style scoped>
+.speedometer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.speedometer-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  /* Set background image */
+  background-image: url('../assets/speedometer.svg');
+  background-size: cover;
+}
+
+.speedometer-background {
+  /* Set the same size and border-radius as the container to cover it */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.speedometer-arrow {
+  position: absolute;
+  top: 10%; /* Adjust this value as needed */
+  left: 50%;
+  width: 2px;
+  height: 80px;
+  background-color: #3498db;
+  transform-origin: bottom;
+  transform: translateX(-50%); /* Updated to only translate horizontally */
+}
+
+.speedometer-reading {
+  margin-top: 10px;
+  font-size: 24px;
+  color: #333;
+}
+</style>
