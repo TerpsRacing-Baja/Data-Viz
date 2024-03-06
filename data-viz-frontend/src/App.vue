@@ -2,6 +2,7 @@
 import PlaybackControl from "./components/PlaybackControl.vue";
 import Map from "./components/Map.vue";
 import Speedometer from "./components/Speedometer.vue";
+import D3 from "./components/3D.vue";
 </script>
 
 <template>
@@ -20,6 +21,9 @@ import Speedometer from "./components/Speedometer.vue";
     <PlaybackControl></PlaybackControl>
   </div>
   
+  <div id="widgets">
+    <D3></D3>
+  </div>
   
 
   

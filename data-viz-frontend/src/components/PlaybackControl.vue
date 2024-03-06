@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, GPS_DATA, CAR_SPEED } from "../emitter-messages";
+import { PLAYBACK_UPDATE, GPS_DATA, CAR_SPEED, CAR_ROTATION } from "../emitter-messages";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faPlay, faPause } from "@fortawesome/free-solid-svg-icons";
 import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about this, but it works so hey
@@ -61,6 +61,12 @@ function iterateAndPub() {
     velocity: csv[i]['Speed|"mph"|0.0|150.0|25']
   });
 
+  emitter.emit(CAR_ROTATION, {
+    yaw: csv[i]['Yaw|"Deg/Sec"|-120|120|50'],
+    pitch: csv[i]['Pitch|"Deg/Sec"|-120|120|50'],
+    roll: csv[i]['Roll|"Deg/Sec"|-120|120|50']
+  });
+
   time.value = i;
 
   // controls direction of index change
@@ -108,6 +114,12 @@ function scrub() {
 
   emitter.emit(CAR_SPEED, {
     velocity: csv[i]['Speed|"mph"|0.0|150.0|25'],
+  });
+
+  emitter.emit(CAR_ROTATION, {
+    yaw: csv[i]['Yaw|"Deg/Sec"|-120|120|50'],
+    pitch: csv[i]['Pitch|"Deg/Sec"|-120|120|50'],
+    roll: csv[i]['Roll|"Deg/Sec"|-120|120|50']
   });
 }
 </script>
