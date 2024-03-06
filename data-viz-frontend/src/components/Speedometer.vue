@@ -24,7 +24,7 @@
   <div class="speedometer">
     <div class="speedometer-container">
       <div class="speedometer-background"></div> <!-- New div for the background -->
-      <div class="speedometer-arrow" :style="{ transform: 'rotate(' + (speed * 6.8 + 220 )  + 'deg)' }"></div>
+      <div class="speedometer-arrow" :style="{ transform: 'rotate(' + (speed * 7 + 220 )  + 'deg)' }"></div>
     </div>
     <div class="speedometer-reading">{{ speed }} mph</div>
   </div>
