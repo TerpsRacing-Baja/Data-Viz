@@ -13,6 +13,9 @@
         <TresDirectionalLight :position="[0, 2, 4]" :intensity="1.2" cast-shadow />
       </TresCanvas>
     </div>
+    <div class="reading">pitch: {{ pitch.toFixed(3) }} deg/sec</div>
+    <div class="reading">yaw: {{ yaw.toFixed(3) }} deg/sec</div>
+    <div class="reading">roll: {{ roll.toFixed(3) }} deg/sec</div>
   </template>
   
   <script setup lang="ts">
@@ -51,8 +54,6 @@
     yaw.value = (newRot["yaw"] * Math.PI/180)
     pitch.value = (newRot["pitch"] * Math.PI/180)
     roll.value = (newRot["roll"]* Math.PI/180)
-
-
   }
   
 
@@ -64,6 +65,12 @@
     height: 200px; /* Adjust the height as needed */
     margin: 0 auto; /* Center the container horizontally */
     border: 1px solid #ccc; /* Optional: Add a border for visual clarity */
+  }
+
+  .reading {
+    margin-top: 10px;
+    font-size: 24px;
+    color: #333;
   }
   </style>
   
