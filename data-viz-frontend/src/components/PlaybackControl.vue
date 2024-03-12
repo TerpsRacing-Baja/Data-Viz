@@ -1,35 +1,64 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, GPS_DATA } from "../emitter-messages";
+import { PLAYBACK_UPDATE, GPS_DATA, CSV_FILE, Events } from "../emitter-messages";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faPlay, faPause } from "@fortawesome/free-solid-svg-icons";
-import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about this, but it works so hey
+//import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about this, but it works so hey
+
 
 const emitter = inject(EMITTER_KEY);
 const speed = ref(100);
 const time = ref(0);
+const path = "../assets/";
 
+let file_chosen = ref(false);
+let csv = ref("");
 let play = ref(false);
 let reverse = ref(false);
 let i = 0;
-let csv_length = csv.length - 1;
+let csv_length = ref(-1)
+//let csv_length = csv.length - 1;
 
-onMounted(() => {
-  let coords: [number, number][] = [];
+onMounted(() => {  
+  // let coords: [number, number][] = [];
 
-  for (let j = 0; j < csv.length; j++) {
-    coords.push([
-      csv[j]['Longitude|"Degrees"|-180.0|180.0|25'],
-      csv[j]['Latitude|"Degrees"|-180.0|180.0|25'],
-    ]);
-  }
+  // for (let j = 0; j < csv.length; j++) {
+  //   coords.push([
+  //     csv[j]['Longitude|"Degrees"|-180.0|180.0|25'],
+  //     csv[j]['Latitude|"Degrees"|-180.0|180.0|25'],
+  //   ]);
+  // }
 
-  emitter?.emit(GPS_DATA, { coords: coords });
-  emitter?.emit(PLAYBACK_UPDATE, { index: 0 }); // centers view on first index. view.fit will complain but this works
+  // emitter?.emit(GPS_DATA, { coords: coords });
+  // emitter?.emit(PLAYBACK_UPDATE, { index: 0 }); // centers view on first index. view.fit will complain but this works
+  emitter.on(CSV_FILE, (e) => handleCSV(e));
+
 });
 
 // console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
+
+async function extractFromCSV() {
+  console.log("Extracting data from CSV");
+  const data_module = await import(csv.value)
+  const data_csv = data_module.default;
+  csv_length.value = data_csv.length;
+  let coords: [number, number][] = [];
+
+  for (let j = 0; j < csv_length.value; j++) {
+    coords.push([
+      data_csv[j]['Longitude|"Degrees"|-180.0|180.0|25'],
+      data_csv[j]['Latitude|"Degrees"|-180.0|180.0|25'],
+    ]);
+  }
+
+  // for(let k = 0; k < csv_length.value; k++) {
+  //   console.log(data_csv[k]);
+  // }
+
+emitter?.emit(GPS_DATA, { coords: coords });
+emitter?.emit(PLAYBACK_UPDATE, { index: 0 }); // centers view on first index. view.fit will complain but this works
+}
 
 function iterateAndPub() {
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
@@ -49,7 +78,7 @@ function iterateAndPub() {
   else i++;
 
   // this could also wrap around, but caps make things easier, kind of make more sense in the context of playback
-  if (i >= csv.length) i = csv.length - 1;
+  if (i >= csv_length.value) i = csv_length.value - 1;
   if (i < 0) i = 0;
 
   waitThenPub();
@@ -68,9 +97,14 @@ function waitThenPub() {
 
 // Each time button is pressed, serves as a restart and depends on boolean check in above
 function toggleAndStartPub() {
-  play.value = !play.value;
-
-  waitThenPub();
+  if(file_chosen.value){
+    console.log("Starting playback with file " + csv.value);
+    extractFromCSV();
+    play.value = !play.value;
+    waitThenPub();
+  } else {
+    console.log("File not chosen yet!");
+  }
 }
 
 function scrub() {
@@ -84,6 +118,15 @@ function scrub() {
 
   i = time.value;
 }
+
+function handleCSV(
+    chosenCSV: Events["csv-file"]
+  ){
+    if (chosenCSV == null) throw new Error("No CSV file chosen!");
+    csv.value = path + chosenCSV.file_name;
+    file_chosen.value = true;
+    console.log("PlaybackControl.vue recieved emission of CSV file " + csv.value);
+  }
 </script>
 
 <template>

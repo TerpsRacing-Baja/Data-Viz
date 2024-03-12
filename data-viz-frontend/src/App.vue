@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PlaybackControl from "./components/PlaybackControl.vue";
 import Map from "./components/Map.vue";
+import CSVPicker from "./components/CSVPicker.vue";
 </script>
 
 <template>
@@ -13,6 +14,12 @@ import Map from "./components/Map.vue";
   <div id="widgets">
     <PlaybackControl></PlaybackControl>
   </div>
+
+  <div id="vfill"/>
+  <div id="widgets">
+    <CSVPicker></CSVPicker>
+  </div>f
+
 </template>
 
 <style scoped>
