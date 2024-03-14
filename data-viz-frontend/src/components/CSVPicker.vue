@@ -18,10 +18,15 @@ function storeChosenFile() {
   if(fileInput.files) {
     chosenFile.value = fileInput.files[0].name;
     console.log("File chosen: " + chosenFile.value)
+    if(chosenFile.value.endsWith('csv')) { 
+      isFileChosen.value = true;
+      console.log("Sending data thru emitter: " + chosenFile.value);
+      emitter.emit(CSV_FILE, {file_name: chosenFile.value});
+    } else {
+      isFileChosen.value = false;
+    }
+
   }
-  chosenFile.value == null ? isFileChosen = false : isFileChosen = true;
-  console.log("Sending data thru emitter: " + chosenFile.value);
-  emitter.emit(CSV_FILE, {file_name: chosenFile.value});
 }
 
 // function getChosenFile() {
@@ -36,7 +41,7 @@ function storeChosenFile() {
 <!-- <input type="file" ref="fileInput" @change="handleFileChange()" /> -->
   <input type="file" id="fileInput" />
   <button @click="storeChosenFile">
-    <font-awesome-icon :icon="isFileChosen.value ? 'faFile' : 'faFileUpload'"></font-awesome-icon>
+    <!-- <font-awesome-icon :icon="isFileChosen.value ? 'faFile' : 'faFileUpload'"></font-awesome-icon> -->
     {{ isFileChosen ? 'File Chosen' : 'Choose File' }}
   </button>
 </div>

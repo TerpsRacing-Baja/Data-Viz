@@ -98,10 +98,12 @@ function waitThenPub() {
 // Each time button is pressed, serves as a restart and depends on boolean check in above
 function toggleAndStartPub() {
   if(file_chosen.value){
-    console.log("Starting playback with file " + csv.value);
-    extractFromCSV();
-    play.value = !play.value;
-    waitThenPub();
+    play.value = !(play.value);
+    if(play.value) {
+      console.log("Starting playback with file " + csv.value);
+      extractFromCSV();
+      waitThenPub();
+    }
   } else {
     console.log("File not chosen yet!");
   }
@@ -126,6 +128,9 @@ function handleCSV(
     csv.value = path + chosenCSV.file_name;
     file_chosen.value = true;
     console.log("PlaybackControl.vue recieved emission of CSV file " + csv.value);
+    if(play.value) {
+      toggleAndStartPub(); // Essentially pauses the playing of the visualization
+    }
   }
 </script>
 
