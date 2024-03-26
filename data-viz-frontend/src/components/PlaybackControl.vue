@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, GPS_DATA } from "../emitter-messages";
+import { PLAYBACK_UPDATE, GPS_DATA, CAR_SPEED } from "../emitter-messages";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faPlay, faPause } from "@fortawesome/free-solid-svg-icons";
 import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about this, but it works so hey
@@ -26,7 +26,25 @@ onMounted(() => {
   }
 
   emitter?.emit(GPS_DATA, { coords: coords });
-  emitter?.emit(PLAYBACK_UPDATE, { index: 0 }); // centers view on first index. view.fit will complain but this works
+  try {
+    emitter?.emit(PLAYBACK_UPDATE, { index: 0 });//centers view on first index. view.fit will complain but this works
+  } catch (error) {console.error("Cannot fit empty extent provided as `geometry`")}
+
+});
+
+onMounted(() => {
+  let coords: [number, number][] = [];
+
+  for (let j = 0; j < csv.length; j++) {
+    coords.push([
+      csv[j]['Longitude|"Degrees"|-180.0|180.0|25'],
+      csv[j]['Latitude|"Degrees"|-180.0|180.0|25'],
+    ]);
+  }
+
+  emitter?.emit(GPS_DATA, { coords: coords });
+
+  
 });
 
 // console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
@@ -37,6 +55,10 @@ function iterateAndPub() {
   // so that 0 goes out at the beginning
   emitter.emit(PLAYBACK_UPDATE, {
     index: i,
+  });
+
+  emitter.emit(CAR_SPEED, {
+    velocity: csv[i]['Speed|"mph"|0.0|150.0|25']
   });
 
   time.value = i;
@@ -83,6 +105,10 @@ function scrub() {
   });
 
   i = time.value;
+
+  emitter.emit(CAR_SPEED, {
+    velocity: csv[i]['Speed|"mph"|0.0|150.0|25'],
+  });
 }
 </script>
 
@@ -97,8 +123,8 @@ function scrub() {
       class="slider"
       @input="scrub"
     />
-    <label>Speed: x{{ speed / 200 }}</label>
 
+    <label>Speed: x{{ speed/200 }}</label>
     <input v-model="speed" type="range" min="-200" max="200" class="slider" />
 
     <button @click="toggleAndStartPub()">
