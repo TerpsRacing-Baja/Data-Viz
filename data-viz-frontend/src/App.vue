@@ -18,7 +18,7 @@ import CSVPicker from "./components/CSVPicker.vue";
   <div id="vfill"/>
   <div id="widgets">
     <CSVPicker></CSVPicker>
-  </div>f
+  </div>
 
 </template>
 
