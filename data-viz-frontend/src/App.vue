@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PlaybackControl from "./components/PlaybackControl.vue";
 import Map from "./components/Map.vue";
+import CSVPicker from "./components/CSVPicker.vue";
 import Speedometer from "./components/Speedometer.vue";
 </script>
 
@@ -19,10 +20,12 @@ import Speedometer from "./components/Speedometer.vue";
   <div id="widgets">
     <PlaybackControl></PlaybackControl>
   </div>
-  
-  
 
-  
+  <div id="vfill"/>
+  <div id="widgets">
+    <CSVPicker></CSVPicker>
+  </div>
+
 </template>
 
 <style scoped>
