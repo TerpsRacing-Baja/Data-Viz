@@ -11,8 +11,7 @@ import Speedometer from "./components/Speedometer.vue";
     <Map></Map>
   </div>
 
-  <div id="vfill" />
-
+  <div id="vfill" /> 
   <div id="widgets">
     <Speedometer></Speedometer>
   </div>

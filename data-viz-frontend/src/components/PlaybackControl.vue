@@ -4,7 +4,6 @@ import { EMITTER_KEY } from "../injection-keys";
 import { PLAYBACK_UPDATE, GPS_DATA, CSV_FILE, Events, CAR_SPEED } from "../emitter-messages";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faPlay, faPause } from "@fortawesome/free-solid-svg-icons";
-//import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about this, but it works so hey
 
 
 const emitter = inject(EMITTER_KEY);
@@ -18,48 +17,32 @@ let play = ref(false);
 let reverse = ref(false);
 let i = 0;
 let csv_length = ref(-1)
-//let csv_length = csv.length - 1;
+let coords: [number, number][] = [];
+let data_csv = ref();
 
+// onMounted constantly checks for a CSV file name delivered by CSVPicker.vue
 onMounted(() => {  
-  // let coords: [number, number][] = [];
-
-  // for (let j = 0; j < csv.length; j++) {
-  //   coords.push([
-  //     csv[j]['Longitude|"Degrees"|-180.0|180.0|25'],
-  //     csv[j]['Latitude|"Degrees"|-180.0|180.0|25'],
-  //   ]);
-  // }
-
-  // emitter?.emit(GPS_DATA, { coords: coords });
-  // emitter?.emit(PLAYBACK_UPDATE, { index: 0 }); // centers view on first index. view.fit will complain but this works
   emitter.on(CSV_FILE, (e) => handleCSV(e));
-
 });
-
-// console.log(csv) // for debugging purposes, otherwise the contents of csv as an object are opaque
 
 async function extractFromCSV() {
   console.log("Extracting data from CSV");
-  const data_module = await import(csv.value)
-  const data_csv = data_module.default;
-  csv_length.value = data_csv.length;
-  let coords: [number, number][] = [];
-
-  for (let j = 0; j < csv_length.value; j++) {
+  const data_module = await import(csv.value) // Dynamically imports csv filename into csv.value
+  data_csv.value = data_module.default;
+  csv_length.value = data_csv.value.length;
+  for (let j = 0; j < csv_length.value; j++) { // Populated 'coords' array with GPS coordinates
     coords.push([
-      data_csv[j]['Longitude|"Degrees"|-180.0|180.0|25'],
-      data_csv[j]['Latitude|"Degrees"|-180.0|180.0|25'],
+      data_csv.value[j]['Longitude|"Degrees"|-180.0|180.0|25'],
+      data_csv.value[j]['Latitude|"Degrees"|-180.0|180.0|25'],
     ]);
   }
 
-  // for(let k = 0; k < csv_length.value; k++) {
-  //   console.log(data_csv[k]);
-  // }
-
-emitter?.emit(GPS_DATA, { coords: coords });
+emitter?.emit(GPS_DATA, { coords: coords }); // Sends coords thru emitter to Map.vue
 try {
     emitter?.emit(PLAYBACK_UPDATE, { index: 0 });//centers view on first index. view.fit will complain but this works
   } catch (error) {console.error("Cannot fit empty extent provided as `geometry`")}
+}
+
 
 function iterateAndPub() {
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
@@ -69,8 +52,9 @@ function iterateAndPub() {
     index: i,
   });
 
+  // Emits the current speed to Speedometer.vue
   emitter.emit(CAR_SPEED, {
-    velocity: csv[i]['Speed|"mph"|0.0|150.0|25']
+    velocity: data_csv.value[i]['Speed|"mph"|0.0|150.0|25']
   });
 
   time.value = i;
@@ -102,18 +86,20 @@ function waitThenPub() {
 
 // Each time button is pressed, serves as a restart and depends on boolean check in above
 function toggleAndStartPub() {
-  if(file_chosen.value){
+  if(file_chosen.value == true){
+    document.getElementById("fileChosenText").style.display = "none"; 
     play.value = !(play.value);
     if(play.value) {
       console.log("Starting playback with file " + csv.value);
-      extractFromCSV();
+     // extractFromCSV();
       waitThenPub();
-    }
+    } 
   } else {
-    console.log("File not chosen yet!");
-  }
-}
+    document.getElementById("fileChosenText").style.display = "block"; 
+      }
+ }
 
+// Scrubber that allows user traversal thru the visualization
 function scrub() {
   play.value = false; //stop playing when touching scrub bar due to odd behavior
 
@@ -126,10 +112,12 @@ function scrub() {
   i = time.value;
 
   emitter.emit(CAR_SPEED, {
-    velocity: csv[i]['Speed|"mph"|0.0|150.0|25'],
+    velocity: data_csv.value[i]['Speed|"mph"|0.0|150.0|25'],
   });
 }
 
+/* Handles the emitter sending a CSV file from CSVPicker.vue - note that CSVPicker.vue handles verification
+   that the file is a CSV, but neither file ensures that it is a properly formatted CSV. */ 
 function handleCSV(
     chosenCSV: Events["csv-file"]
   ){
@@ -138,9 +126,11 @@ function handleCSV(
     file_chosen.value = true;
     console.log("PlaybackControl.vue recieved emission of CSV file " + csv.value);
     if(play.value) {
-      toggleAndStartPub(); // Essentially pauses the playing of the visualization
+      play.value = false; // pauses the playing of the visualization if a new CSV is chosen while the visualization is playing
     }
+    extractFromCSV();
   }
+
 </script>
 
 <template>
@@ -161,6 +151,8 @@ function handleCSV(
     <button @click="toggleAndStartPub()">
       <font-awesome-icon :icon="play ? faPause : faPlay"></font-awesome-icon>
     </button>
+    <div id="fileChosenText" style="display: none;">File not chosen!</div>
+
   </div>
 </template>
 

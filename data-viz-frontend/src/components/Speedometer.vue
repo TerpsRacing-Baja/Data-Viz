@@ -16,6 +16,7 @@
     newSpeed: Events["car-speeds"]
   ){
     if (!newSpeed) throw new Error("Speeds given was empty!");
+    console.log("Speed update received");
     speed.value = newSpeed["velocity"]
   }
 </script>
