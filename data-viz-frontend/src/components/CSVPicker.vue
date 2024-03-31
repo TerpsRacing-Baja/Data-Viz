@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { inject, ref } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { CSV_FILE, Events } from "../emitter-messages";
-import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { faFile, faFileUpload } from "@fortawesome/free-solid-svg-icons";
-import csv from "../assets/rc_30.csv"; // Annoying, VSCode will complain about this, but it works so hey
+import { CSV_FILE} from "../emitter-messages";
 
 const emitter = inject(EMITTER_KEY);
 
 let isFileChosen = ref(false);
-let chosenFile = ref(null);
+const chosenFile = ref<string | null>(null);
 
 
 function storeChosenFile() {
+  if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
+
 //   chosenFile.value = $refs.fileInput.files[0];
   var fileInput = document.getElementById('fileInput') as HTMLInputElement;
   if(fileInput.files) {
@@ -29,11 +28,6 @@ function storeChosenFile() {
   }
 }
 
-// function getChosenFile() {
-//   return isFileChosen.value ? chosenFile.value : null;
-// }
-
-// export { getChosenFile };
 </script>
 
 <template>

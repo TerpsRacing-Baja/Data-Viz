@@ -22,6 +22,7 @@ let data_csv = ref();
 
 // onMounted constantly checks for a CSV file name delivered by CSVPicker.vue
 onMounted(() => {  
+  if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
   emitter.on(CSV_FILE, (e) => handleCSV(e));
 });
 
@@ -37,8 +38,8 @@ async function extractFromCSV() {
     ]);
   }
 
-emitter?.emit(GPS_DATA, { coords: coords }); // Sends coords thru emitter to Map.vue
-try {
+  emitter?.emit(GPS_DATA, { coords: coords }); // Sends coords thru emitter to Map.vue
+  try {
     emitter?.emit(PLAYBACK_UPDATE, { index: 0 });//centers view on first index. view.fit will complain but this works
   } catch (error) {console.error("Cannot fit empty extent provided as `geometry`")}
 }
@@ -86,18 +87,25 @@ function waitThenPub() {
 
 // Each time button is pressed, serves as a restart and depends on boolean check in above
 function toggleAndStartPub() {
-  if(file_chosen.value == true){
-    document.getElementById("fileChosenText").style.display = "none"; 
-    play.value = !(play.value);
-    if(play.value) {
-      console.log("Starting playback with file " + csv.value);
-     // extractFromCSV();
-      waitThenPub();
-    } 
-  } else {
-    document.getElementById("fileChosenText").style.display = "block"; 
+  if (!document) throw new Error("document is missing emitter"); // Error checking
+
+  const fileChosenElement = document.getElementById("fileChosenText");
+  const fileChosenValue = file_chosen.value;
+
+  if (fileChosenElement && fileChosenValue !== null && fileChosenValue !== undefined) {
+    if (fileChosenValue) {
+      fileChosenElement.style.display = "none";
+      play.value = !play.value;
+      if (play.value) {
+        console.log("Starting playback with file " + csv.value);
+        // extractFromCSV();
+        waitThenPub();
       }
- }
+    } else {
+      fileChosenElement.style.display = "block";
+    }
+  }
+}
 
 // Scrubber that allows user traversal thru the visualization
 function scrub() {

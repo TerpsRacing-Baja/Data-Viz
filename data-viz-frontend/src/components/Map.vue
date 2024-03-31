@@ -95,6 +95,14 @@ function handlePosUpdate(
   if (!newIndex) throw new Error("Index update to map was empty!");
   if (i < 0 || i > coords.length) throw new Error("Index update out of bounds");
 
+  //check if this index is null
+  if (coords[newIndex.index] && coords[newIndex.index][0] !== undefined && coords[newIndex.index][1] !== undefined) {
+    //console.log("Coordinates are defined:", coords[newIndex.index]);
+  } else {
+    //console.log("Coordinates are undefined or contain undefined values.");
+    return;
+  }
+
   // Update position for the icon and add to the multilinestring array nesting
   curr.value = coords[newIndex["index"]];
 

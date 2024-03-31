@@ -16,7 +16,13 @@
     newSpeed: Events["car-speeds"]
   ){
     if (!newSpeed) throw new Error("Speeds given was empty!");
-    console.log("Speed update received");
+
+    //check for undefined velocity given
+    if (newSpeed["velocity"] == undefined){
+      //console.log("undefined velocity");
+      return;
+    }
+    // console.log("Speed update received");
     speed.value = newSpeed["velocity"]
   }
 </script>
