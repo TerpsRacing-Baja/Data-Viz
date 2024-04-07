@@ -85,6 +85,7 @@ function handleGPSData(gps: Events["gps-data"]) {
   if (!gps) throw new Error("Empty GPS update!");
 
   coords = gps["coords"];
+  //console.log(coords)
 }
 
 function handlePosUpdate(

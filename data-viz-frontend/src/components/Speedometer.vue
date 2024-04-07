@@ -4,7 +4,7 @@
   import { CAR_SPEED, Events } from "../emitter-messages";
   const emitter = inject(EMITTER_KEY);
   
-  let speed = ref(0);
+  let speed = ref(-1);
   
   onMounted(() => {
     if (!emitter) throw new Error("Toplevel failed to provide emitter");
@@ -16,9 +16,9 @@
     newSpeed: Events["car-speeds"]
   ){
     if (!newSpeed) throw new Error("Speeds given was empty!");
-
+    //console.log(newSpeed["velocity"])
     //check for undefined velocity given
-    if (newSpeed["velocity"] == undefined){
+    if (newSpeed["velocity"] == ''){
       //console.log("undefined velocity");
       return;
     }
