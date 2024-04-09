@@ -15,13 +15,15 @@ let file_chosen = ref(false);
 let csv = ref("");
 let play = ref(false);
 let reverse = ref(false);
-let i = 0;
+let i: number = 0;
+let map_index: number = 0;
 let csv_length = ref(-1)
 let coords: [number, number][] = [];
 let data_csv = ref();
 
 // onMounted constantly checks for a CSV file name delivered by CSVPicker.vue
 onMounted(() => {  
+  if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
   emitter.on(CSV_FILE, (e) => handleCSV(e));
 });
 
@@ -31,30 +33,76 @@ async function extractFromCSV() {
   data_csv.value = data_module.default;
   csv_length.value = data_csv.value.length;
   for (let j = 0; j < csv_length.value; j++) { // Populated 'coords' array with GPS coordinates
-    coords.push([
-      data_csv.value[j]['Longitude|"Degrees"|-180.0|180.0|25'],
-      data_csv.value[j]['Latitude|"Degrees"|-180.0|180.0|25'],
-    ]);
+      if (
+      data_csv.value[j]['Longitude|Degrees|-180.0|180.0|25'] !== 0 &&
+      data_csv.value[j]['Longitude|Degrees|-180.0|180.0|25'] !== "0.0" &&
+      data_csv.value[j]['Longitude|Degrees|-180.0|180.0|25'] !== '' &&
+      data_csv.value[j]['Latitude|Degrees|-180.0|180.0|25'] !== 0 &&
+      data_csv.value[j]['Latitude|Degrees|-180.0|180.0|25'] !== '0.0' &&
+      data_csv.value[j]['Latitude|Degrees|-180.0|180.0|25'] !== ''
+    ) {
+      coords.push([
+        data_csv.value[j]['Longitude|Degrees|-180.0|180.0|25'],
+        data_csv.value[j]['Latitude|Degrees|-180.0|180.0|25'],
+      ]);
+    }
+
   }
 
-emitter?.emit(GPS_DATA, { coords: coords }); // Sends coords thru emitter to Map.vue
-try {
+  emitter?.emit(GPS_DATA, { coords: coords }); // Sends coords thru emitter to Map.vue
+  try {
     emitter?.emit(PLAYBACK_UPDATE, { index: 0 });//centers view on first index. view.fit will complain but this works
   } catch (error) {console.error("Cannot fit empty extent provided as `geometry`")}
 }
 
+function getMapIndex(current_time: number, target_time: number) {
+  // console.log(current_time)
+  //console.log(target_time)
+  while(current_time!=target_time){
+    let downflag: boolean = false;
+    if(current_time>target_time){
+      current_time--;
+      downflag = true;
+    }
+    if(current_time<target_time){
+      current_time++;
+    }
+
+    if (
+      data_csv.value[current_time]['Longitude|Degrees|-180.0|180.0|25'] !== 0 &&
+      data_csv.value[current_time]['Longitude|Degrees|-180.0|180.0|25'] !== "0.0" &&
+      data_csv.value[current_time]['Longitude|Degrees|-180.0|180.0|25'] !== '' &&
+      data_csv.value[current_time]['Latitude|Degrees|-180.0|180.0|25'] !== 0 &&
+      data_csv.value[current_time]['Latitude|Degrees|-180.0|180.0|25'] !== '0.0' &&
+      data_csv.value[current_time]['Latitude|Degrees|-180.0|180.0|25'] !== ''
+    ) {
+      
+      if(downflag){
+        map_index--;
+      }else{
+        map_index++;
+      }
+    }
+  }
+  //console.log(map_index);
+
+  return map_index;
+  
+ // console.log(data_csv.value[current_time]['Longitude|Degrees|-180.0|180.0|25'])
+  
+}
 
 function iterateAndPub() {
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
   // so that 0 goes out at the beginning
   emitter.emit(PLAYBACK_UPDATE, {
-    index: i,
+    index: getMapIndex(time.value, i),
   });
-
+  
   // Emits the current speed to Speedometer.vue
   emitter.emit(CAR_SPEED, {
-    velocity: data_csv.value[i]['Speed|"mph"|0.0|150.0|25']
+    velocity: data_csv.value[i]['Speed|mph|0.0|150.0|25']
   });
 
   time.value = i;
@@ -86,18 +134,25 @@ function waitThenPub() {
 
 // Each time button is pressed, serves as a restart and depends on boolean check in above
 function toggleAndStartPub() {
-  if(file_chosen.value == true){
-    document.getElementById("fileChosenText").style.display = "none"; 
-    play.value = !(play.value);
-    if(play.value) {
-      console.log("Starting playback with file " + csv.value);
-     // extractFromCSV();
-      waitThenPub();
-    } 
-  } else {
-    document.getElementById("fileChosenText").style.display = "block"; 
+  if (!document) throw new Error("document is missing emitter"); // Error checking
+
+  const fileChosenElement = document.getElementById("fileChosenText");
+  const fileChosenValue = file_chosen.value;
+
+  if (fileChosenElement && fileChosenValue !== null && fileChosenValue !== undefined) {
+    if (fileChosenValue) {
+      fileChosenElement.style.display = "none";
+      play.value = !play.value;
+      if (play.value) {
+        console.log("Starting playback with file " + csv.value);
+        // extractFromCSV();
+        waitThenPub();
       }
- }
+    } else {
+      fileChosenElement.style.display = "block";
+    }
+  }
+}
 
 // Scrubber that allows user traversal thru the visualization
 function scrub() {
@@ -106,13 +161,13 @@ function scrub() {
   if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
 
   emitter.emit(PLAYBACK_UPDATE, {
-    index: Math.max(time.value, 0),
+    index: Math.max(getMapIndex(i, time.value), 0),
   });
 
   i = time.value;
 
   emitter.emit(CAR_SPEED, {
-    velocity: data_csv.value[i]['Speed|"mph"|0.0|150.0|25'],
+    velocity: data_csv.value[i]['Speed|mph|0.0|150.0|25'],
   });
 }
 
