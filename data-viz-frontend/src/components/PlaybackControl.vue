@@ -30,6 +30,9 @@ onMounted(() => {
 async function extractFromCSV() {
   console.log("Extracting data from CSV");
   const data_module = await import(csv.value) // Dynamically imports csv filename into csv.value
+  coords = []
+  i = 0;
+  time.value=0;
   data_csv.value = data_module.default;
   csv_length.value = data_csv.value.length;
   for (let j = 0; j < csv_length.value; j++) { // Populated 'coords' array with GPS coordinates

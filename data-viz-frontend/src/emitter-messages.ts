@@ -2,7 +2,7 @@
 export const PLAYBACK_UPDATE = "playback-update";
 export const CAR_SPEED = "car-speeds";
 
-
+export const RESET = "reset";
 export const GPS_DATA = "gps-data";
 export const CSV_FILE = "csv-file"
 
@@ -12,4 +12,5 @@ export type Events = {
   "gps-data"?: { coords: [number, number][] };
   "csv-file"?: {file_name: string};
   "car-speeds"?: { velocity: number };
+  "reset"?: {};
 };
