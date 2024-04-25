@@ -3,6 +3,7 @@ import PlaybackControl from "./components/PlaybackControl.vue";
 import Map from "./components/Map.vue";
 import CSVPicker from "./components/CSVPicker.vue";
 import Speedometer from "./components/Speedometer.vue";
+import gyro from "./components/Rotation.vue"
 </script>
 
 <template>
@@ -18,6 +19,10 @@ import Speedometer from "./components/Speedometer.vue";
 
   <div id="widgets">
     <PlaybackControl></PlaybackControl>
+  </div>
+
+  <div id="widgets">
+    <gyro></gyro>
   </div>
 
   <div id="vfill"/>

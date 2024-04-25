@@ -5,6 +5,7 @@ export const CAR_SPEED = "car-speeds";
 export const RESET = "reset";
 export const GPS_DATA = "gps-data";
 export const CSV_FILE = "csv-file"
+export const ROTATION = "rotation";
 
 // This specifies the types of events we emit, note the optional flag b/c there could be one of several type
 export type Events = {
@@ -13,4 +14,5 @@ export type Events = {
   "csv-file"?: {file_name: string};
   "car-speeds"?: { velocity: number };
   "reset"?: {};
+  "rotation"?: {pitch: number, yaw: number, roll: number};
 };

@@ -94,6 +94,9 @@ function handlePosUpdate(
   source: VectorSource
 ) {
   if (!newIndex) throw new Error("Index update to map was empty!");
+
+ // console.log(coords);
+
   if (i < 0 || i > coords.length) throw new Error("Index update out of bounds");
 
   //check if this index is null
