@@ -30,7 +30,7 @@
 <template>
   <div class="speedometer">
     <div class="speedometer-container">
-      <div class="speedometer-background"></div> <!-- New div for the background -->
+      
       <div class="speedometer-arrow" :style="{ transform: 'rotate(' + (speed * 7 + 220 )  + 'deg)' }"></div>
     </div>
     <div class="speedometer-reading">{{ speed }} mph</div>
@@ -55,14 +55,10 @@
   background-size: cover;
 }
 
-.speedometer-background {
-  /* Set the same size and border-radius as the container to cover it */
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
+.buggy {
+  width: 200px; /* Adjust size as needed */
+  height: auto;
+  margin-bottom: 10px; /* Add margin for spacing */
 }
 
 .speedometer-arrow {
@@ -73,8 +69,10 @@
   height: 80px;
   background-color: #3498db;
   transform-origin: bottom;
-  transform: translateX(-50%); /* Updated to only translate horizontally */
+  transform: translateX(-50%);
+  z-index: 2; /* Add z-index to ensure it stays on top */
 }
+
 
 .speedometer-reading {
   margin-top: 10px;

@@ -3,6 +3,8 @@
 ```
 $ npm install
 $ npm run dev
+
+If you are using live data visulization. Turn on the receiving python code first and refresh the live data page
 ```
 
 Then open the link from command output

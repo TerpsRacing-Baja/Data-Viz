@@ -1,15 +1,19 @@
+<!-- src/App.vue -->
 <script setup lang="ts">
+<<<<<<< Updated upstream
 import PlaybackControl from "./components/PlaybackControl.vue";
 import Map from "./components/Map.vue";
 import CSVPicker from "./components/CSVPicker.vue";
 import Speedometer from "./components/Speedometer.vue";
+=======
+>>>>>>> Stashed changes
 </script>
 
 <template>
-  
-  <div id="map">
-    <Map></Map>
+  <div id="app">
+    <router-view /> <!-- This will render the matched route -->
   </div>
+<<<<<<< Updated upstream
 
   <div id="vfill" /> 
   <div id="widgets">
@@ -25,20 +29,10 @@ import Speedometer from "./components/Speedometer.vue";
     <CSVPicker></CSVPicker>
   </div>
 
+=======
+>>>>>>> Stashed changes
 </template>
 
 <style scoped>
-#map {
-  width: 100%;
-  height: 60vh;
-}
-
-#vfill {
-  height: 10vh;
-}
-
-#widgets {
-  width: 100%;
-  height: 20vh;
-}
+/* Add any global styles if needed */
 </style>
