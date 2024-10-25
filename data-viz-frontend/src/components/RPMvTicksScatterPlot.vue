@@ -1,4 +1,4 @@
-<!-- RPMvTicks -->
+
 <template>
   <Scatter :data="chartData" :options="options" />
 </template>

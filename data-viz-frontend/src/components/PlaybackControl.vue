@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, GPS_DATA, CSV_FILE, Events, CAR_SPEED } from "../emitter-messages";
+import { PLAYBACK_UPDATE, GPS_DATA, CSV_FILE, Events, CAR_SPEED, ROTATION } from "../emitter-messages";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faPlay, faPause } from "@fortawesome/free-solid-svg-icons";
+import { Emitter } from "mitt";
 
 
 const emitter = inject(EMITTER_KEY);
@@ -53,6 +54,7 @@ async function extractFromCSV() {
   }
 
   emitter?.emit(GPS_DATA, { coords: coords }); // Sends coords thru emitter to Map.vue
+  
   try {
     emitter?.emit(PLAYBACK_UPDATE, { index: 0 });//centers view on first index. view.fit will complain but this works
   } catch (error) {console.error("Cannot fit empty extent provided as `geometry`")}
@@ -92,9 +94,6 @@ function getMapIndex(current_time: number, target_time: number) {
   return map_index;
   
  // console.log(data_csv.value[current_time]['Longitude|Degrees|-180.0|180.0|25'])
-<<<<<<< Updated upstream
-  
-=======
 }
 
 //SingleEmit is a function that should only be called once when advancing or at the end of scrubbing.
@@ -110,7 +109,6 @@ function singleEmit(index: number){
     yaw: data_csv.value[index]['Euler Yaw'],
     roll: 1
   })
->>>>>>> Stashed changes
 }
 
 function iterateAndPub() {
@@ -121,10 +119,7 @@ function iterateAndPub() {
     index: getMapIndex(time.value, i),
   });
   
-  // Emits the current speed to Speedometer.vue
-  emitter.emit(CAR_SPEED, {
-    velocity: data_csv.value[i]['Speed|mph|0.0|150.0|25']
-  });
+  singleEmit(i);
 
   time.value = i;
 
@@ -187,9 +182,7 @@ function scrub() {
 
   i = time.value;
 
-  emitter.emit(CAR_SPEED, {
-    velocity: data_csv.value[i]['Speed|mph|0.0|150.0|25'],
-  });
+  singleEmit(i);
 }
 
 /* Handles the emitter sending a CSV file from CSVPicker.vue - note that CSVPicker.vue handles verification
