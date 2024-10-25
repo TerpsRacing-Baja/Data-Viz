@@ -1,6 +1,7 @@
 # Quickstart:
 
 ```
+$ cd data-viz-frontend
 $ npm install
 $ npm run dev
 ```
