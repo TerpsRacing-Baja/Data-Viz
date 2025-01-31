@@ -9,6 +9,8 @@ export const CSV_FILE = "csv-file"
 export const ROTATION = "rotation";
 export const GPS_POINT = "gps-point";
 
+export const RPM_DATA = "rpm-data";
+
 // This specifies the types of events we emit, note the optional flag b/c there could be one of several type
 export type Events = {
   "playback-update"?: { index: number };
@@ -18,4 +20,5 @@ export type Events = {
   "session-reset"?: {};
   "rotation"?: {pitch: number, yaw: number, roll: number};
   "gps-point"?: {point: [number, number]}
+  "rpm-data"?: {tick: number, rpm1: number, rpm2: number}
 };
