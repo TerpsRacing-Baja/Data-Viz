@@ -1,11 +1,10 @@
-
 <template>
-  <Scatter :data="chartData" :options="options" />
+  <Line :data="chartData" :options="options" />
 </template>
 
 <script lang="ts">
 import { ref, computed, onMounted, inject } from "vue";
-import { Scatter } from 'vue-chartjs';
+import { Line } from 'vue-chartjs';
 import {
   Chart as ChartJS,
   LinearScale,
@@ -23,7 +22,7 @@ ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 export default {
   name: 'RPMGraph',
   components: {
-    Scatter
+    Line  // Update to use the 'Line' component for a line chart
   },
   setup() {
     const emitter = inject(EMITTER_KEY); // Inject the emitter
@@ -38,14 +37,14 @@ export default {
           label: 'RPM1',
           backgroundColor: '#42A5F5',
           borderColor: '#42A5F5',
-          fill: false,
+          fill: false,  // Line without filling
           data: rawDataRPM1.value // RPM1 data vs ticks
         },
         {
           label: 'RPM2',
           backgroundColor: '#FFA726',
           borderColor: '#FFA726',
-          fill: false,
+          fill: false,  // Line without filling
           data: rawDataRPM2.value // RPM2 data vs ticks
         }
       ]
@@ -72,6 +71,8 @@ export default {
           // Add new points to both datasets
           rawDataRPM1.value = [...rawDataRPM1.value, { x: ticks.value, y: rpm1 }];
           rawDataRPM2.value = [...rawDataRPM2.value, { x: ticks.value, y: rpm2 }];
+
+  
         }
       };
 
@@ -124,9 +125,14 @@ export default {
             mode: 'index',
             intersect: false,
           }
-        }
+        },
+        animation: {
+          duration: 100,  // Reduce this value for faster animation (default is 1000ms)
+          easing: 'easeOutQuad',  // Adjust the easing for different animations (optional)
+        },
       }
     };
+
   }
 }
 </script>

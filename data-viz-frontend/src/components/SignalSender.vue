@@ -1,17 +1,15 @@
 <script setup lang="ts">
-import { inject, ref, onMounted } from "vue";
+import { inject, ref, onMounted, onUnmounted } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
 import { ROTATION } from "../emitter-messages";
 
 const emitter = inject(EMITTER_KEY);
-const isPooling = ref(false); // Ref to track if pooling is active
+const isPooling = ref(false); // Track if pooling is active
+let intervalId: number | null = null;
 
 onMounted(() => {
   if (!emitter) throw new Error("Toplevel failed to provide emitter");
 });
-
-// Ref to store the interval ID, so we can clear it when stopping the pool
-let intervalId: number | null = null;
 
 // Function to start pooling
 function start() {
@@ -35,19 +33,13 @@ function poolForData() {
   }, 500);
 }
 
-
-function poolingForReal(){
-    //wait for signal
-        //send signal
-}
-
-// Function to send random rotation data for testing stuff
+// Function to send random rotation data for testing
 function sendData() {
   if (!emitter) throw new Error("Toplevel failed to provide emitter");
   emitter.emit(ROTATION, {
-    pitch: Math.random() * 360, // Random pitch
-    yaw: Math.random() * 360,   // Random yaw
-    roll: 1                     // Fixed roll value
+    pitch: Math.random() * 360,
+    yaw: Math.random() * 360,
+    roll: 1
   });
 }
 
@@ -60,6 +52,10 @@ function togglePooling() {
   }
 }
 
+// **Stop pooling automatically when the component is unmounted**
+onUnmounted(() => {
+  stop();
+});
 </script>
 
 <template>

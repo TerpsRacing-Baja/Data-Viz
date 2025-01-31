@@ -1,15 +1,20 @@
 <template>
-  <div>
+  <div style="display: flex; flex-direction: column; height: 100vh;">
+    <SignalSender></SignalSender>
     <h1>This is the new page!</h1>
     <router-link to="/">Go back to Home</router-link>
     
-    <!-- Button to reset the chart and start a new CSV -->
     <button @click="startNewSession">Start New Session</button>
 
-    <ScatterPlot :chartData="chartData" /> <!-- Pass chartData prop for RPM vs RPM -->
-    <AnotherScatter :chartData="chartDataRPMTicks" /> <!-- Pass chartData prop for RPM vs Ticks -->
+    <ScatterPlot :chartData="chartData" />
+    <AnotherScatter :chartData="chartDataRPMTicks" />
+
+    <div style="flex-grow: 1; min-height: 400px;">
+      <Map />
+    </div>
   </div>
 </template>
+
 
 <script lang="ts">
 import { ref, computed, onMounted, inject } from 'vue';
@@ -17,6 +22,8 @@ import { EMITTER_KEY } from "../injection-keys"; // Import the emitter key
 import { SESSION_RESET } from "../emitter-messages"; // Import the session reset message
 import ScatterPlot from '../components/RPMvRPMScatterPlot.vue'; 
 import AnotherScatter from '../components/RPMvTicksScatterPlot.vue';
+import SignalSender from '../components/SignalSender.vue';
+import Map from '../components/Map.vue'
 import { saveAs } from 'file-saver'; // For saving CSV
 
 export default {
@@ -24,6 +31,8 @@ export default {
   components: {
     ScatterPlot,
     AnotherScatter,
+    SignalSender,
+    Map
   },
   setup() {
     const emitter = inject(EMITTER_KEY); // Inject the emitter
@@ -86,6 +95,8 @@ export default {
       emitter?.emit(SESSION_RESET); // Emit SESSION_RESET to notify other components
     };
 
+
+
     // Save the CSV data to a file
     const saveCsv = () => {
       const csvContent = 'data:text/csv;charset=utf-8,'
@@ -103,7 +114,7 @@ export default {
         const data = event.data.split(','); // Assuming data format is rpm1, rpm2, ticks
         const [rpm1, rpm2, receivedTicks] = data.map(Number); // Parse values as numbers
 
-        if (!isNaN(rpm1) && !isNaN(rpm2) && !isNaN(receivedTicks)) {
+        if (!isNaN(rpm1) && !isNaN(rpm2) && !isNaN(receivedTicks)) {//TODO: Update this in the future to handle data that is bad
           ticks.value = receivedTicks;
 
           // Add new points to the data

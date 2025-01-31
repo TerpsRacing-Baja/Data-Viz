@@ -107,6 +107,10 @@ export default {
             mode: 'index',
             intersect: false,
           }
+        },
+        animation: {
+          duration: 100,  // Reduce this value for faster animation (default is 1000ms)
+          easing: 'easeOutQuad',  // Adjust the easing for different animations (optional)
         }
       }
     };
