@@ -17,6 +17,8 @@
 
 
 <script lang="ts">
+
+import { PLAYBACK_UPDATE, GPS_DATA, Events, CAR_SPEED, ROTATION, RPM_DATA } from "../emitter-messages";
 import { ref, computed, onMounted, inject } from 'vue';
 import { EMITTER_KEY } from "../injection-keys"; // Import the emitter key
 import { SESSION_RESET } from "../emitter-messages"; // Import the session reset message
@@ -26,6 +28,24 @@ import SignalSender from '../components/SignalSender.vue';
 import Map from '../components/Map.vue'
 import { saveAs } from 'file-saver'; // For saving CSV
 
+//data sending functions
+const emitter = inject(EMITTER_KEY);
+onMounted(() => {  
+  if (!emitter) throw new Error("Toplevel failed to provide emitter!"); // Error checking
+});
+
+
+function emitRpmTick(emitter , _rpm1: number, _rpm2: number, _tick: number){ 
+  if (!emitter) throw new Error("Toplevel failed to provide emitter 2"); // Error checking
+  // Emits the current speed to Speedometer.vue
+  emitter.emit(RPM_DATA, {
+    rpm1: _rpm1,
+    rpm2: _rpm2,
+    tick: _tick
+  });
+}
+
+//reading and sending data
 export default {
   name: 'LiveData',
   components: {
@@ -113,16 +133,17 @@ export default {
       socket.onmessage = function(event) {
         const data = event.data.split(','); // Assuming data format is rpm1, rpm2, ticks
         const [rpm1, rpm2, receivedTicks] = data.map(Number); // Parse values as numbers
+        //console.log(receivedTicks)
 
         if (!isNaN(rpm1) && !isNaN(rpm2) && !isNaN(receivedTicks)) {//TODO: Update this in the future to handle data that is bad
-          ticks.value = receivedTicks;
-
           // Add new points to the data
-          rawDataRPM1.value.push({ x: ticks.value, y: rpm1 });
-          rawDataRPM2.value.push({ x: ticks.value, y: rpm2 });
+          rawDataRPM1.value.push({ x: receivedTicks, y: rpm1 });
+          rawDataRPM2.value.push({ x: receivedTicks, y: rpm2 });
 
           // Save the new values for CSV
-          csvData.value.push([rpm1, rpm2, ticks.value]);
+          csvData.value.push([rpm1, rpm2, receivedTicks]);
+
+          emitRpmTick(emitter, rpm1, rpm2, receivedTicks)
         }
       };
 
