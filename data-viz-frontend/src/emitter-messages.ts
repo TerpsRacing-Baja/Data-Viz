@@ -2,9 +2,14 @@
 export const PLAYBACK_UPDATE = "playback-update";
 export const CAR_SPEED = "car-speeds";
 
-export const RESET = "reset";
+export const SESSION_RESET = "session-reset";
+
 export const GPS_DATA = "gps-data";
 export const CSV_FILE = "csv-file"
+export const ROTATION = "rotation";
+export const GPS_POINT = "gps-point";
+
+export const RPM_DATA = "rpm-data";
 
 // This specifies the types of events we emit, note the optional flag b/c there could be one of several type
 export type Events = {
@@ -12,5 +17,8 @@ export type Events = {
   "gps-data"?: { coords: [number, number][] };
   "csv-file"?: {file_name: string};
   "car-speeds"?: { velocity: number };
-  "reset"?: {};
+  "session-reset"?: {};
+  "rotation"?: {pitch: number, yaw: number, roll: number};
+  "gps-point"?: {point: [number, number]}
+  "rpm-data"?: {tick: number, rpm1: number, rpm2: number}
 };

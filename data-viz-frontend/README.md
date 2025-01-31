@@ -5,8 +5,12 @@ $ cd data-viz-frontend
 $ npm install
 $ npm run dev
 ```
-
 Then open the link from command output
+
+
+
+If you are using live data visulization. Turn on the receiving python code first and refresh the live data page. Python/pipeline code found here: https://github.com/EricXu1728/arduinoRadioPipe
+
 
 # Data Visualization Frontend
 

@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { inject, ref, onMounted } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, Events, GPS_DATA } from "../emitter-messages";
+import { PLAYBACK_UPDATE, Events, GPS_DATA, GPS_POINT } from "../emitter-messages";
 import type View from "ol/View";
 import type VectorSource from "ol/source/vector";
 import buggy from "../assets/buggy.svg";
@@ -79,6 +79,8 @@ onMounted(() => {
   // sets up listener callbacks
   emitter.on(GPS_DATA, (e) => handleGPSData(e));
   emitter.on(PLAYBACK_UPDATE, (e) => handlePosUpdate(e, view, source));
+  emitter.on(GPS_POINT, (e)=> handlePointUpdate(e, view, source))
+  
 });
 
 function handleGPSData(gps: Events["gps-data"]) {
@@ -112,6 +114,8 @@ function handlePosUpdate(
   for (let j = i + 1; j <= newIndex["index"]; j++)
     path.value.push([coords[j - 1], coords[j]]);
 
+  console.log(path.value)
+
   for (let j = i - 1; j >= newIndex["index"]; j--) path.value.pop();
 
   // Special case for index 0 to clear initial value
@@ -123,4 +127,36 @@ function handlePosUpdate(
   // A nice-to-have, zooms the map in on the path, updating ever time the path changes
   view.fit(source.getExtent(), { padding: [50, 50, 50, 50] });
 }
+
+function handlePointUpdate(
+  newPoint: Events["gps-point"],
+  view: View,
+  source: VectorSource
+) {
+  if (!newPoint || !newPoint.point || !Array.isArray(newPoint.point) || newPoint.point.length !== 2) {
+    throw new Error("Invalid GPS point data!");
+  }
+
+  const newCoord: [number, number] = newPoint.point;
+
+  // If path is empty, initialize it
+  if (path.value.length === 0) {
+    path.value.push([newCoord]); // Start with a single-point array
+  } else {
+    // Append a segment connecting the last known position to the new point
+    const lastSegment = path.value[path.value.length - 1];
+
+    if (lastSegment.length === 1) {
+      // If last segment has only one point, complete it
+      lastSegment.push(newCoord);
+    } else {
+      // Otherwise, create a new segment
+      path.value.push([lastSegment[1], newCoord]);
+    }
+  }
+
+  // Update the view to fit the updated path
+  view.fit(source.getExtent(), { padding: [50, 50, 50, 50] });
+}
+
 </script>
