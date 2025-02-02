@@ -14,7 +14,7 @@ import {
   Legend
 } from 'chart.js';
 import { EMITTER_KEY } from "../injection-keys"; // Import the emitter key
-import { SESSION_RESET } from "../emitter-messages"; // Import the session reset message
+import { SESSION_RESET, RPM_DATA } from "../emitter-messages"; // Import event messages
 
 // Register the necessary Chart.js components
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
@@ -22,7 +22,7 @@ ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 export default {
   name: 'RPMGraph',
   components: {
-    Line  // Update to use the 'Line' component for a line chart
+    Line // Update to use the 'Line' component for a line chart
   },
   setup() {
     const emitter = inject(EMITTER_KEY); // Inject the emitter
@@ -50,44 +50,31 @@ export default {
       ]
     }));
 
+    // Listen for events and update the graph data accordingly
     onMounted(() => {
+      if (!emitter) throw new Error("Toplevel failed to provide emitter");
+
       // Listen for SESSION_RESET event to reset graph data
-      emitter?.on(SESSION_RESET, () => {
+      emitter.on(SESSION_RESET, () => {
         resetGraphData();
       });
 
-      // Connect to the WebSocket server
-      const socket = new WebSocket("ws://localhost:8765");
-
-      // Handle incoming WebSocket messages
-      socket.onmessage = function(event) {
-        const data = event.data.split(',');  // Assuming CSV format
-        const [rpm1, rpm2, receivedTicks] = data.map(Number);  // Parse values as numbers
-
-        if (!isNaN(rpm1) && !isNaN(rpm2)) {
-          // Increment the tick
-          ticks.value = receivedTicks;  // Update the ticks ref
-
-          // Add new points to both datasets
-          rawDataRPM1.value = [...rawDataRPM1.value, { x: ticks.value, y: rpm1 }];
-          rawDataRPM2.value = [...rawDataRPM2.value, { x: ticks.value, y: rpm2 }];
-
-  
-        }
-      };
-
-      socket.onopen = () => {
-        console.log("WebSocket connection established.");
-      };
-
-      socket.onclose = () => {
-        console.log("WebSocket connection closed.");
-      };
-
-      socket.onerror = (error) => {
-        console.log("WebSocket error: ", error);
-      };
+      // Listen for RPM_DATA event to update the graph with new values
+      emitter.on(RPM_DATA, (data: { rpm1: number, rpm2: number, tick: number }) => {
+        updateGraph(data);
+      });
     });
+
+    // Function to update the graph with incoming event data
+    function updateGraph(newVals: { rpm1: number, rpm2: number, tick: number }) {
+      if (!newVals) throw new Error("Received RPM data was empty!");
+
+      const { rpm1, rpm2, tick } = newVals;
+
+      // Update the reactive rawData arrays with new values
+      rawDataRPM1.value = [...rawDataRPM1.value, { x: tick, y: rpm1 }];
+      rawDataRPM2.value = [...rawDataRPM2.value, { x: tick, y: rpm2 }];
+    }
 
     // Function to reset graph data
     const resetGraphData = () => {
@@ -126,13 +113,9 @@ export default {
             intersect: false,
           }
         },
-        animation: {
-          duration: 100,  // Reduce this value for faster animation (default is 1000ms)
-          easing: 'easeOutQuad',  // Adjust the easing for different animations (optional)
-        },
+        animation: false, // Disable animation
       }
     };
-
   }
 }
 </script>
