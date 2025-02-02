@@ -21,7 +21,7 @@
 import { PLAYBACK_UPDATE, GPS_DATA, Events, CAR_SPEED, ROTATION, RPM_DATA } from "../emitter-messages";
 import { ref, computed, onMounted, inject } from 'vue';
 import { EMITTER_KEY } from "../injection-keys"; // Import the emitter key
-import { SESSION_RESET } from "../emitter-messages"; // Import the session reset message
+import { SESSION_RESET, RPM_DATA, GPS_POINT, GPS_DATA } from "../emitter-messages"; // Import the session reset message
 import ScatterPlot from '../components/RPMvRPMScatterPlot.vue'; 
 import AnotherScatter from '../components/RPMvTicksScatterPlot.vue';
 import SignalSender from '../components/SignalSender.vue';
@@ -44,6 +44,16 @@ function emitRpmTick(emitter , _rpm1: number, _rpm2: number, _tick: number){
     tick: _tick
   });
 }
+
+
+function emitGPSCoordinates(emitter, _latitude: number, _longitude: number) {
+  if (!emitter) throw new Error("Toplevel failed to provide emitter 3"); // Error checking
+  // Emits the current GPS coordinates to Map.vue
+  emitter.emit(GPS_DATA, {
+    point: [_latitude, _longitude]
+  });
+}
+
 
 //reading and sending data
 export default {
@@ -120,7 +130,7 @@ export default {
     // Save the CSV data to a file
     const saveCsv = () => {
       const csvContent = 'data:text/csv;charset=utf-8,'
-        + 'RPM1,RPM2,Ticks\n' // CSV headers
+        + 'RPM1,RPM2,Ticks,Latitude,Longitude \n' // CSV headers
         + csvData.value.map(e => e.join(',')).join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       saveAs(blob, `data_${new Date().toISOString()}.csv`);
@@ -131,19 +141,30 @@ export default {
       const socket = new WebSocket("ws://localhost:8765");
 
       socket.onmessage = function(event) {
+        
         const data = event.data.split(','); // Assuming data format is rpm1, rpm2, ticks
-        const [rpm1, rpm2, receivedTicks] = data.map(Number); // Parse values as numbers
-        //console.log(receivedTicks)
 
-        if (!isNaN(rpm1) && !isNaN(rpm2) && !isNaN(receivedTicks)) {//TODO: Update this in the future to handle data that is bad
+        //console.log(data)
+        const [rpm1, rpm2, cordx, cordy,receivedTicks] = data.map(Number); // Parse values as numbers
+        //console.log(receivedTicks)
+        //console.log(cordx, cordy)
+
+        if (!isNaN(rpm1) && !isNaN(rpm2) && !isNaN(receivedTicks) && !isNaN(cordx) && !isNaN(cordy)) {//TODO: Update this in the future to handle data that is bad
+          ticks.value = receivedTicks;
+          console.log(ticks.value)
+
           // Add new points to the data
           rawDataRPM1.value.push({ x: receivedTicks, y: rpm1 });
           rawDataRPM2.value.push({ x: receivedTicks, y: rpm2 });
 
           // Save the new values for CSV
-          csvData.value.push([rpm1, rpm2, receivedTicks]);
+
+          csvData.value.push([rpm1, rpm2, cordx, cordy, receivedTicks]);
 
           emitRpmTick(emitter, rpm1, rpm2, receivedTicks)
+
+          emitGPSCoordinates(emitter, cordx, cordy)
+
         }
       };
 

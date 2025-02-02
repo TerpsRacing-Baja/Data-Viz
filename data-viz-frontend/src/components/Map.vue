@@ -77,17 +77,32 @@ onMounted(() => {
   const source: VectorSource = sourceRef.value?.source;
 
   // sets up listener callbacks
-  emitter.on(GPS_DATA, (e) => handleGPSData(e));
+  emitter.on(GPS_DATA, (e) => handleGPSData(e, view, source));
   emitter.on(PLAYBACK_UPDATE, (e) => handlePosUpdate(e, view, source));
   emitter.on(GPS_POINT, (e)=> handlePointUpdate(e, view, source))
   
 });
 
-function handleGPSData(gps: Events["gps-data"]) {
+function handleGPSData(gps: Events["gps-data"],
+view: View,
+source: VectorSource
+) {
   if (!gps) throw new Error("Empty GPS update!");
 
-  coords = gps["coords"];
-  //console.log(coords)
+  coords = gps["point"];
+  console.log(coords);
+  
+  const lastSegment = path.value[path.value.length - 1];
+
+  if (lastSegment.length === 1) {
+    // If last segment has only one point, complete it
+    lastSegment.push(coords);
+  } else {
+    // Otherwise, create a new segment
+    curr.value = coords
+    path.value.push([lastSegment[1], coords]);
+  }
+  view.fit(source.getExtent(), { padding: [50, 50, 50, 50] });
 }
 
 function handlePosUpdate(
