@@ -17,6 +17,8 @@
 
 
 <script lang="ts">
+
+import { PLAYBACK_UPDATE, GPS_DATA, Events, CAR_SPEED, ROTATION, RPM_DATA } from "../emitter-messages";
 import { ref, computed, onMounted, inject } from 'vue';
 import { EMITTER_KEY } from "../injection-keys"; // Import the emitter key
 import { SESSION_RESET, RPM_DATA, GPS_POINT, GPS_DATA } from "../emitter-messages"; // Import the session reset message
@@ -43,6 +45,7 @@ function emitRpmTick(emitter , _rpm1: number, _rpm2: number, _tick: number){
   });
 }
 
+
 function emitGPSCoordinates(emitter, _latitude: number, _longitude: number) {
   if (!emitter) throw new Error("Toplevel failed to provide emitter 3"); // Error checking
   // Emits the current GPS coordinates to Map.vue
@@ -50,6 +53,7 @@ function emitGPSCoordinates(emitter, _latitude: number, _longitude: number) {
     point: [_latitude, _longitude]
   });
 }
+
 
 //reading and sending data
 export default {
@@ -139,6 +143,7 @@ export default {
       socket.onmessage = function(event) {
         
         const data = event.data.split(','); // Assuming data format is rpm1, rpm2, ticks
+
         //console.log(data)
         const [rpm1, rpm2, cordx, cordy,receivedTicks] = data.map(Number); // Parse values as numbers
         //console.log(receivedTicks)
@@ -149,15 +154,17 @@ export default {
           console.log(ticks.value)
 
           // Add new points to the data
-          rawDataRPM1.value.push({ x: ticks.value, y: rpm1 });
-          rawDataRPM2.value.push({ x: ticks.value, y: rpm2 });
+          rawDataRPM1.value.push({ x: receivedTicks, y: rpm1 });
+          rawDataRPM2.value.push({ x: receivedTicks, y: rpm2 });
 
           // Save the new values for CSV
+
           csvData.value.push([rpm1, rpm2, cordx, cordy, receivedTicks]);
 
           emitRpmTick(emitter, rpm1, rpm2, receivedTicks)
 
           emitGPSCoordinates(emitter, cordx, cordy)
+
         }
       };
 
