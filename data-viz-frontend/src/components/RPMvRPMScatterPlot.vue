@@ -33,8 +33,26 @@ export default {
       datasets: [
         {
           label: 'RPM Data',
-          backgroundColor: '#42A5F5',
+          backgroundColor: rawData.value.map((_, index) => {
+            const totalPoints = rawData.value.length;
+            const lastPoints = 60; // Number of points for gradient fade-out
+            const recentHighlight = 5; // The most recent points to highlight distinctly
+
+            if (index >= totalPoints - recentHighlight) {
+              return '#8B0000'; // Dark Red for last 5 points
+            } else if (index < totalPoints - lastPoints) {
+              return '#D3D3D3'; // Older points stay light grey
+            } else {
+              // Compute gradient color from black (#000000) to light grey (#D3D3D3)
+              const ratio = (index - (totalPoints - lastPoints)) / lastPoints; // Normalize between 0 and 1
+              const gray = Math.round(0 + (211 - 0) * ratio); // 0 is black, 211 is light grey
+              return `rgb(${gray},${gray},${gray})`; // Smooth transition from black to light grey
+            }
+
+          }),
+            
           data: rawData.value // Reactive data binding
+          
         }
       ]
     }));
@@ -46,6 +64,7 @@ export default {
       const rpm1 = parseFloat(newVals["rpm1"]);
       const rpm2 = parseFloat(newVals["rpm2"]);
       const tick = parseFloat(newVals["tick"]);
+      
 
       // Update the reactive rawData array with new values
       rawData.value = [...rawData.value, { x: rpm1, y: rpm2 }];
@@ -98,11 +117,11 @@ export default {
             intersect: false,
           }
         },
-        //animation: {
-        //  duration: 100,  // Reduce this value for faster animation (default is 1000ms)
-         // easing: 'easeOutQuad',  // Adjust the easing for different animations (optional)
-        //}
-        animation: false,
+        animation: {
+          duration: 200,  // Reduce this value for faster animation (default is 1000ms)
+          easing: 'easeOutQuad',  // Adjust the easing for different animations (optional)
+        }
+        //animation: false,
       }
     };
   }

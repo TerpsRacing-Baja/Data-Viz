@@ -113,7 +113,11 @@ export default {
             intersect: false,
           }
         },
-        animation: false, // Disable animation
+        animation: {
+          duration: 200,  // Reduce this value for faster animation (default is 1000ms)
+          easing: 'easeOutQuad',  // Adjust the easing for different animations (optional)
+        }
+        //animation: false, // Disable animation
       }
     };
   }
