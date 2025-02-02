@@ -21,7 +21,6 @@
 import { PLAYBACK_UPDATE, GPS_DATA, Events, CAR_SPEED, ROTATION, RPM_DATA } from "../emitter-messages";
 import { ref, computed, onMounted, inject } from 'vue';
 import { EMITTER_KEY } from "../injection-keys"; // Import the emitter key
-import { SESSION_RESET, RPM_DATA, GPS_POINT, GPS_DATA } from "../emitter-messages"; // Import the session reset message
 import ScatterPlot from '../components/RPMvRPMScatterPlot.vue'; 
 import AnotherScatter from '../components/RPMvTicksScatterPlot.vue';
 import SignalSender from '../components/SignalSender.vue';
