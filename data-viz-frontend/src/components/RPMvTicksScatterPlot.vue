@@ -78,6 +78,7 @@ export default {
 
     // Function to reset graph data
     const resetGraphData = () => {
+      console.log("RPMvTicks has reset")
       rawDataRPM1.value = [];
       rawDataRPM2.value = [];
       ticks.value = 0; // Reset ticks
@@ -113,11 +114,11 @@ export default {
             intersect: false,
           }
         },
-        animation: {
-          duration: 200,  // Reduce this value for faster animation (default is 1000ms)
-          easing: 'easeOutQuad',  // Adjust the easing for different animations (optional)
-        }
-        //animation: false, // Disable animation
+        //animation: {
+         // duration: 200,  // Reduce this value for faster animation (default is 1000ms)
+          //easing: 'easeOutQuad',  // Adjust the easing for different animations (optional)
+        //}
+        animation: false, // Disable animation
       }
     };
   }

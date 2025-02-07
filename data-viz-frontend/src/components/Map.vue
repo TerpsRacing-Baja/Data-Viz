@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { inject, ref, onMounted } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, Events, GPS_DATA, GPS_POINT } from "../emitter-messages";
+import { PLAYBACK_UPDATE, Events, GPS_DATA, GPS_POINT, SESSION_RESET } from "../emitter-messages";
 import type View from "ol/View";
 import type VectorSource from "ol/source/vector";
 import buggy from "../assets/buggy.svg";
@@ -79,8 +79,8 @@ onMounted(() => {
   // sets up listener callbacks
   emitter.on(GPS_DATA, (e) => handleGPSData(e, view, source));
   emitter.on(PLAYBACK_UPDATE, (e) => handlePosUpdate(e, view, source));
-  emitter.on(GPS_POINT, (e)=> handlePointUpdate(e, view, source))
-  
+  emitter.on(GPS_POINT, (e)=> handlePointUpdate(e, view, source));
+  emitter.on(SESSION_RESET, resetMapData);
 });
 
 function handleGPSData(gps: Events["gps-data"],
@@ -90,7 +90,7 @@ source: VectorSource
   if (!gps) throw new Error("Empty GPS update!");
 
   coords = gps["point"];
-  console.log(coords);
+  //console.log(coords);
   
   const lastSegment = path.value[path.value.length - 1];
 
@@ -104,6 +104,15 @@ source: VectorSource
   }
   view.fit(source.getExtent(), { padding: [50, 50, 50, 50] });
 }
+
+function resetMapData() {
+  console.log("Map data has been reset");
+  path.value = [[[0, 0]]];
+  curr.value = [0, 0];
+  coords = [];
+  i = 0;
+}
+
 
 function handlePosUpdate(
   newIndex: Events["playback-update"],
@@ -129,7 +138,7 @@ function handlePosUpdate(
   for (let j = i + 1; j <= newIndex["index"]; j++)
     path.value.push([coords[j - 1], coords[j]]);
 
-  console.log(path.value)
+  // console.log(path.value)
 
   for (let j = i - 1; j >= newIndex["index"]; j--) path.value.pop();
 

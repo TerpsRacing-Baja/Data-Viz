@@ -84,6 +84,7 @@ export default {
 
     // Function to reset rawData
     const resetData = () => {
+      console.log("RpmvRpm has reset")
       rawData.value = []; // Clear the rawData array
     };
 
@@ -117,11 +118,11 @@ export default {
             intersect: false,
           }
         },
-        animation: {
-          duration: 200,  // Reduce this value for faster animation (default is 1000ms)
-          easing: 'easeOutQuad',  // Adjust the easing for different animations (optional)
-        }
-        //animation: false,
+        //animation: rawDataRPM1.value.length > 30 ? false : {
+        //  duration: 200,  // Keep animation for small datasets
+        //  easing: 'easeOutQuad',
+        //}
+        animation: false,
       }
     };
   }

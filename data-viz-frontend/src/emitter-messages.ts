@@ -8,6 +8,7 @@ export const GPS_DATA = "gps-data";
 export const CSV_FILE = "csv-file"
 export const ROTATION = "rotation";
 export const GPS_POINT = "gps-point";
+export const PLOT_POINT = "plot-point";
 
 export const RPM_DATA = "rpm-data";
 
@@ -19,6 +20,7 @@ export type Events = {
   "car-speeds"?: { velocity: number };
   "session-reset"?: {};
   "rotation"?: {pitch: number, yaw: number, roll: number};
-  "gps-point"?: {point: [number, number]}
-  "rpm-data"?: {tick: number, rpm1: number, rpm2: number}
+  "gps-point"?: {point: [number, number]};
+  "rpm-data"?: {tick: number, rpm1: number, rpm2: number};
+  "plot-point"?: {point: [number, number]};
 };
