@@ -35,7 +35,7 @@ export default {
           label: 'RPM Data',
           backgroundColor: rawData.value.map((_, index) => {
             const totalPoints = rawData.value.length;
-            const lastPoints = 60; // Number of points for gradient fade-out
+            const lastPoints = 30; // Number of points for gradient fade-out
             const recentHighlight = 5; // The most recent points to highlight distinctly
 
             if (index >= totalPoints - recentHighlight) {

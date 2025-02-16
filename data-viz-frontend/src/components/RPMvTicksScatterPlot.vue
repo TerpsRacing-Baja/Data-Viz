@@ -74,6 +74,14 @@ export default {
       // Update the reactive rawData arrays with new values
       rawDataRPM1.value = [...rawDataRPM1.value, { x: tick, y: rpm1 }];
       rawDataRPM2.value = [...rawDataRPM2.value, { x: tick, y: rpm2 }];
+
+      // Remove oldest points if the length exceeds 60
+      if (rawDataRPM1.value.length > 60) {
+        rawDataRPM1.value.shift();
+      }
+      if (rawDataRPM2.value.length > 60) {
+        rawDataRPM2.value.shift();
+      }
     }
 
     // Function to reset graph data

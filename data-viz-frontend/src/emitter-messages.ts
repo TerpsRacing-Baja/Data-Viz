@@ -22,5 +22,5 @@ export type Events = {
   "rotation"?: {pitch: number, yaw: number, roll: number};
   "gps-point"?: {point: [number, number]};
   "rpm-data"?: {tick: number, rpm1: number, rpm2: number};
-  "plot-point"?: {point: [number, number]};
+  "plot-point"?: {xPoint: number, yPoint: number};
 };

@@ -3,26 +3,41 @@
     <SignalSender></SignalSender>
     <h1>This is the new page!</h1>
     <router-link to="/">Go back to Home</router-link>
-    
     <button @click="startNewSession">Start New Session</button>
+    <button @click="retryConnection">Retry Connection</button>
 
-    <!-- Checkboxes to Toggle Visibility -->
-    <div>
-      <label>
-        <input type="checkbox" v-model="showScatterPlot" /> Show Scatter Plot (RPM vs RPM)
-      </label>
-      <label>
-        <input type="checkbox" v-model="showAnotherScatter" /> Show Scatter Plot (RPM vs Ticks)
-      </label>
-      <label>
-        <input type="checkbox" v-model="showMap" /> Show Map
-      </label>
-    </div>
+    <!-- Expandable Section for Custom Plot Settings -->
+    <details>
+      <summary>Custom Plot Settings</summary>
+      <div>
+        <label>
+          <input type="checkbox" v-model="showScatterPlot" /> Show Scatter Plot (RPM vs RPM)
+        </label>
+        <label>
+          <input type="checkbox" v-model="showAnotherScatter" /> Show Scatter Plot (RPM vs Ticks)
+        </label>
+        <label>
+          <input type="checkbox" v-model="showCustom" /> Show Custom Plot
+        </label>
+        <label>
+          <input type="checkbox" v-model="showMap" /> Show Map
+        </label>
+        <br>
+        <label>
+          Custom X Column Index:
+          <input type="number" v-model.number="customXCol" />
+        </label>
+        <label>
+          Custom Y Column Index:
+          <input type="number" v-model.number="customYCol" />
+        </label>
+      </div>
+    </details>
 
     <!-- Conditional Rendering of Components -->
     <ScatterPlot v-if="showScatterPlot" :chartData="chartData" />
     <AnotherScatter v-if="showAnotherScatter" :chartData="chartDataRPMTicks" />
-
+    <CustomPlot v-if="showCustom" :xCol="customXCol" :yCol="customYCol" />
     <div v-if="showMap" style="flex-grow: 1; min-height: 400px;">
       <Map />
     </div>
@@ -30,12 +45,13 @@
 </template>
 
 <script lang="ts">
-import { PLAYBACK_UPDATE, GPS_DATA, RPM_DATA, SESSION_RESET } from "../emitter-messages";
+import { PLAYBACK_UPDATE, GPS_DATA, RPM_DATA, SESSION_RESET, PLOT_POINT } from "../emitter-messages";
 import { ref, computed, onMounted, inject, watch } from 'vue';
 import { EMITTER_KEY } from "../injection-keys";
 import ScatterPlot from '../components/RPMvRPMScatterPlot.vue'; 
 import AnotherScatter from '../components/RPMvTicksScatterPlot.vue';
 import SignalSender from '../components/SignalSender.vue';
+import CustomPlot from '../components/CustomPlot.vue';
 import Map from '../components/Map.vue';
 import { saveAs } from 'file-saver';
 
@@ -45,6 +61,7 @@ export default {
     ScatterPlot,
     AnotherScatter,
     SignalSender,
+    CustomPlot,
     Map
   },
   setup() {
@@ -55,9 +72,12 @@ export default {
     const ticks = ref(0);
 
     // Toggle visibility states
-    const showScatterPlot = ref(true);
-    const showAnotherScatter = ref(true);
-    const showMap = ref(true);
+    const showScatterPlot = ref(false);
+    const showAnotherScatter = ref(false);
+    const showMap = ref(false);
+    const showCustom  = ref(false);
+    const customXCol = ref(1);
+    const customYCol = ref(2);
 
     const chartData = computed(() => ({
       datasets: [
@@ -116,66 +136,92 @@ export default {
         tick: _tick
       });
     }
-
+    
+    function emitCustomPlotPoint(emitter, _x: number, _y: number) {
+      if (!emitter) throw new Error("Toplevel failed to provide emitter 4"); // Error checking
+      // Emits the current speed to Speedometer.vue
+      console.log("sending data to custom plot")
+      emitter.emit(PLOT_POINT, {
+        xPoint: _x,
+        yPoint: _y
+      });
+    }
 
     function emitGPSCoordinates(emitter, _latitude: number, _longitude: number) {
       if (!emitter) throw new Error("Toplevel failed to provide emitter 3"); // Error checking
       // Emits the current GPS coordinates to Map.vue
+      console.log(_latitude, _longitude)
       emitter.emit(GPS_DATA, {
         point: [_latitude, _longitude]
       });
     }
 
-    const saveCsv = () => {
-      const csvContent = 'data:text/csv;charset=utf-8,' +
-        'RPM1,RPM2,Ticks,Latitude,Longitude \n' +
-        csvData.value.map(e => e.join(',')).join('\n');
+    function saveCsv() {
+      if (csvData.value.length === 0) return;
+
+      const headers = Object.keys(csvData.value[0]).join(',');
+      const csvContent = 
+        headers + '\n' +
+        csvData.value.map(e => Object.values(e).join(',')).join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       saveAs(blob, `data_${new Date().toISOString()}.csv`);
-    };
+    }
 
     let socket;
-
     onMounted(() => {
+      connectWebSocket();
+    });
+
+    const connectWebSocket = () => {
       socket = new WebSocket("ws://localhost:8765");
+      const iRpm1 = 0
+      const iRpm2 = 1
+      const iCordx = 2
+      const iCordy = 3
+      const iTicks = 4 
 
       socket.onmessage = function(event) {
         const data = event.data.split(',');
-        const [rpm1, rpm2, cordx, cordy, receivedTicks] = data.map(Number);
+        const dataNum = data.map(Number);
 
-        if (!isNaN(rpm1) && !isNaN(rpm2) && !isNaN(receivedTicks) && !isNaN(cordx) && !isNaN(cordy)) {
-          ticks.value = receivedTicks;
-
+        if (!isNaN(dataNum[iRpm1]) && !isNaN(dataNum[iRpm2]) && !isNaN(dataNum[iTicks]) && !isNaN(dataNum[iCordx]) && !isNaN(dataNum[iCordy])) {
+          ticks.value = dataNum[iTicks];
 
           if (showAnotherScatter.value || showScatterPlot.value) {
-            emitRpmTick(emitter, rpm1, rpm2, receivedTicks)
+            emitRpmTick(emitter, dataNum[iRpm1], dataNum[iRpm2], dataNum[iTicks])
           }
 
           if (showMap.value) {
-            emitGPSCoordinates(emitter, cordx, cordy)
+            emitGPSCoordinates(emitter, dataNum[iCordx], dataNum[iCordy])
           }
 
-          csvData.value.push([rpm1, rpm2, cordx, cordy, receivedTicks]);
+          if (showCustom.value) {
+            emitCustomPlotPoint(emitter, dataNum[customXCol.value], dataNum[customYCol.value])
+          }
+
+          const dataObj = dataNum.reduce((acc, value, index) => {
+            acc[`col${index}`] = value;
+            return acc;
+          }, {});
+
+          csvData.value.push(dataObj);
         }
       };
 
       socket.onopen = () => console.log("WebSocket connection established.");
       socket.onclose = () => console.log("WebSocket connection closed.");
       socket.onerror = (error) => console.log("WebSocket error: ", error);
-    });
+    };
 
-    // Watch for changes in visibility and stop updates when hidden
-    watch([showScatterPlot, showAnotherScatter, showMap], ([scatter, anotherScatter, map]) => {
-      if (!scatter && !anotherScatter && !map) {
-        console.log("No visualizations active, stopping data processing.");
+    const retryConnection = () => {
+      if (socket) {
         socket.close();
-      } else if (!socket || socket.readyState === WebSocket.CLOSED) {
-        console.log("Reconnecting WebSocket...");
-        socket = new WebSocket("ws://localhost:8765");
       }
-    });
+      connectWebSocket();
+    };
 
     return {
+      retryConnection,
       chartData,
       chartDataRPMTicks,
       startNewSession,
@@ -185,7 +231,10 @@ export default {
       ticks,
       showScatterPlot,
       showAnotherScatter,
-      showMap
+      showMap,
+      showCustom,
+      customXCol,
+      customYCol
     };
   }
 };
