@@ -36,6 +36,7 @@ async function extractFromCSV() {
   time.value=0;
   data_csv.value = data_module.default;
   csv_length.value = data_csv.value.length;
+  console.log("CSV length: " + csv_length.value);
   for (let j = 0; j < csv_length.value; j++) { // Populated 'coords' array with GPS coordinates
       if (
       data_csv.value[j]['Longitude|Degrees|-180.0|180.0|25'] !== 0 &&
@@ -52,6 +53,8 @@ async function extractFromCSV() {
     }
 
   }
+
+  console.log("Extracted data from CSV", coords);
 
   emitter?.emit(GPS_DATA, { coords: coords }); // Sends coords thru emitter to Map.vue
   

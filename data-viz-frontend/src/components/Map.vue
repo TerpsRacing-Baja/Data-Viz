@@ -63,6 +63,8 @@ const path = ref<([[number, number]] | [[number, number], [number, number]])[]>(
 );
 const curr = ref<[number, number]>([0, 0]);
 
+const maxPathLength = ref(400); // Maximum length of the path
+
 let coords: [number, number][];
 let i = 0;
 
@@ -88,9 +90,13 @@ view: View,
 source: VectorSource
 ) {
   if (!gps) throw new Error("Empty GPS update!");
+  //console.log(gps)
 
-  coords = gps["point"];
+  
+
+  coords = gps["coords"];
   //console.log(coords);
+  console.log("Loaded GPS data", coords )
   
   const lastSegment = path.value[path.value.length - 1];
 
@@ -102,6 +108,12 @@ source: VectorSource
     curr.value = coords
     path.value.push([lastSegment[1], coords]);
   }
+
+  // Check if path length exceeds the limit
+  while (path.value.length > maxPathLength.value) {
+    path.value.shift(); // Remove the oldest segment
+  }
+
   view.fit(source.getExtent(), { padding: [50, 50, 50, 50] });
 }
 
@@ -144,6 +156,11 @@ function handlePosUpdate(
 
   // Special case for index 0 to clear initial value
   if (newIndex["index"] == 0) path.value = [[coords[0]]];
+
+  // Check if path length exceeds the limit
+  while (path.value.length > maxPathLength.value) {
+    path.value.shift(); // Remove the oldest segment
+  }
 
   // Update for next time
   i = newIndex["index"];
