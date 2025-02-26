@@ -55,7 +55,7 @@ const goToNewPage = () => {
 
 #playback-wrapper {
   width: 100%;
-  height: 5vh;
+  height: 1vh;
   margin-top: 1vh;
 }
 
@@ -64,7 +64,7 @@ const goToNewPage = () => {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  gap: 30vh;
+  gap: 3vh;
 }
 
 #right-section > * {

@@ -1,6 +1,6 @@
 <template>
   <div style="display: flex; flex-direction: column; height: 100vh;">
-    <SignalSender></SignalSender>
+    
     <h1>This is the new page!</h1>
     <router-link to="/">Go back to Home</router-link>
     <button @click="startNewSession">Start New Session</button>

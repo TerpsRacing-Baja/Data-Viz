@@ -38,21 +38,13 @@ async function extractFromCSV() {
   csv_length.value = data_csv.value.length;
   console.log("CSV length: " + csv_length.value);
   for (let j = 0; j < csv_length.value; j++) { // Populated 'coords' array with GPS coordinates
-      if (
-      data_csv.value[j]['Longitude|Degrees|-180.0|180.0|25'] !== 0 &&
-      data_csv.value[j]['Longitude|Degrees|-180.0|180.0|25'] !== "0.0" &&
-      data_csv.value[j]['Longitude|Degrees|-180.0|180.0|25'] !== '' &&
-      data_csv.value[j]['Latitude|Degrees|-180.0|180.0|25'] !== 0 &&
-      data_csv.value[j]['Latitude|Degrees|-180.0|180.0|25'] !== '0.0' &&
-      data_csv.value[j]['Latitude|Degrees|-180.0|180.0|25'] !== ''
-    ) {
-      coords.push([
-        data_csv.value[j]['Longitude|Degrees|-180.0|180.0|25'],
-        data_csv.value[j]['Latitude|Degrees|-180.0|180.0|25'],
-      ]);
-    }
+  const longitude = data_csv.value[j]['Longitude|Degrees|-180.0|180.0|25'];
+  const latitude = data_csv.value[j]['Latitude|Degrees|-180.0|180.0|25'];
 
+  if (longitude && longitude !== "0.0" && latitude && latitude !== "0.0") {
+    coords.push([longitude, latitude]);
   }
+}
 
   console.log("Extracted data from CSV", coords);
 
