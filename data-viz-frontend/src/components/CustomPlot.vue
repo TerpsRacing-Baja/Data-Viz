@@ -14,13 +14,13 @@ import {
   Legend
 } from 'chart.js';
 import { EMITTER_KEY } from "../injection-keys"; // Import the emitter key
-import { SESSION_RESET, RPM_DATA } from "../emitter-messages"; // Import the session reset message
+import { SESSION_RESET, PLOT_POINT } from "../emitter-messages"; // Import the session reset message
 
 // Register the necessary Chart.js components
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 export default {
-  name: 'ScatterPlot',
+  name: 'Custom Plot',
   components: {
     Scatter
   },
@@ -32,7 +32,7 @@ export default {
     const chartData = computed(() => ({
       datasets: [
         {
-          label: 'RPM Data',
+          label: 'Data',
           backgroundColor: rawData.value.map((_, index) => {
             const totalPoints = rawData.value.length;
             const lastPoints = 30; // Number of points for gradient fade-out
@@ -58,16 +58,15 @@ export default {
     }));
 
     // Function to update the graph with incoming event data
-    function updateGraph(newVals: Events["rpm-data"]) {
+    function updateGraph(newVals: Events["plot-point"]) {
       if (!newVals) throw new Error("Received RPM data was empty!");
 
-      const rpm1 = parseFloat(newVals["rpm1"]);
-      const rpm2 = parseFloat(newVals["rpm2"]);
-      const tick = parseFloat(newVals["tick"]);
+      const _x = parseFloat(newVals["xPoint"]);
+      const _y = parseFloat(newVals["yPoint"]);
       
 
       // Update the reactive rawData array with new values
-      rawData.value = [...rawData.value, { x: rpm1, y: rpm2 }];
+      rawData.value = [...rawData.value, { x: _x, y: _y }];
     }
 
     onMounted(() => {
@@ -79,12 +78,12 @@ export default {
       });
 
       // Listen for RPM_DATA event to update the graph
-      emitter.on(RPM_DATA, (e) => updateGraph(e));
+      emitter.on(PLOT_POINT, (e) => updateGraph(e));
     });
 
     // Function to reset rawData
     const resetData = () => {
-      console.log("RpmvRpm has reset")
+      console.log("Custom data has reset")
       rawData.value = []; // Clear the rawData array
     };
 

@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { inject, ref, onMounted } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, Events, GPS_DATA, GPS_POINT } from "../emitter-messages";
+import { PLAYBACK_UPDATE, Events, GPS_DATA, GPS_POINT, SESSION_RESET } from "../emitter-messages";
 import type View from "ol/View";
 import type VectorSource from "ol/source/vector";
 import buggy from "../assets/buggy.svg";
@@ -63,6 +63,8 @@ const path = ref<([[number, number]] | [[number, number], [number, number]])[]>(
 );
 const curr = ref<[number, number]>([0, 0]);
 
+const maxPathLength = ref(400); // Maximum length of the path
+
 let coords: [number, number][];
 let i = 0;
 
@@ -79,8 +81,8 @@ onMounted(() => {
   // sets up listener callbacks
   emitter.on(GPS_DATA, (e) => handleGPSData(e, view, source));
   emitter.on(PLAYBACK_UPDATE, (e) => handlePosUpdate(e, view, source));
-  emitter.on(GPS_POINT, (e)=> handlePointUpdate(e, view, source))
-  
+  emitter.on(GPS_POINT, (e)=> handlePointUpdate(e, view, source));
+  emitter.on(SESSION_RESET, resetMapData);
 });
 
 function handleGPSData(gps: Events["gps-data"],
@@ -88,9 +90,13 @@ view: View,
 source: VectorSource
 ) {
   if (!gps) throw new Error("Empty GPS update!");
+  //console.log(gps)
 
-  coords = gps["point"];
-  console.log(coords);
+  
+
+  coords = gps["coords"];
+  //console.log(coords);
+  console.log("Loaded GPS data", coords )
   
   const lastSegment = path.value[path.value.length - 1];
 
@@ -102,8 +108,23 @@ source: VectorSource
     curr.value = coords
     path.value.push([lastSegment[1], coords]);
   }
+
+  // Check if path length exceeds the limit
+  while (path.value.length > maxPathLength.value) {
+    path.value.shift(); // Remove the oldest segment
+  }
+
   view.fit(source.getExtent(), { padding: [50, 50, 50, 50] });
 }
+
+function resetMapData() {
+  console.log("Map data has been reset");
+  path.value = [[[0, 0]]];
+  curr.value = [0, 0];
+  coords = [];
+  i = 0;
+}
+
 
 function handlePosUpdate(
   newIndex: Events["playback-update"],
@@ -129,12 +150,17 @@ function handlePosUpdate(
   for (let j = i + 1; j <= newIndex["index"]; j++)
     path.value.push([coords[j - 1], coords[j]]);
 
-  console.log(path.value)
+  // console.log(path.value)
 
   for (let j = i - 1; j >= newIndex["index"]; j--) path.value.pop();
 
   // Special case for index 0 to clear initial value
   if (newIndex["index"] == 0) path.value = [[coords[0]]];
+
+  // Check if path length exceeds the limit
+  while (path.value.length > maxPathLength.value) {
+    path.value.shift(); // Remove the oldest segment
+  }
 
   // Update for next time
   i = newIndex["index"];

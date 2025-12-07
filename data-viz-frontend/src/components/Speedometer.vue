@@ -36,43 +36,37 @@
     <div class="speedometer-reading">{{ speed }} mph</div>
   </div>
 </template>
-
 <style scoped>
 .speedometer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  width: 80%;
+  height: 80%;
 }
 
 .speedometer-container {
   position: relative;
-  width: 200px;
-  height: 200px;
+  width: 100%;
+  height: 0;
+  padding-bottom: 100%; /* Maintain aspect ratio */
   border-radius: 50%;
-  /* Set background image */
   background-image: url('../assets/speedometer.svg');
   background-size: cover;
 }
 
-.buggy {
-  width: 200px; /* Adjust size as needed */
-  height: auto;
-  margin-bottom: 10px; /* Add margin for spacing */
-}
-
 .speedometer-arrow {
   position: absolute;
-  top: 10%; /* Adjust this value as needed */
+  top: 10%;
   left: 50%;
   width: 2px;
-  height: 80px;
+  height: 40%;
   background-color: #3498db;
   transform-origin: bottom;
   transform: translateX(-50%);
-  z-index: 2; /* Add z-index to ensure it stays on top */
+  z-index: 2;
 }
-
 
 .speedometer-reading {
   margin-top: 10px;

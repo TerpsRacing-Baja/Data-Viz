@@ -74,10 +74,19 @@ export default {
       // Update the reactive rawData arrays with new values
       rawDataRPM1.value = [...rawDataRPM1.value, { x: tick, y: rpm1 }];
       rawDataRPM2.value = [...rawDataRPM2.value, { x: tick, y: rpm2 }];
+
+      // Remove oldest points if the length exceeds 60
+      if (rawDataRPM1.value.length > 60) {
+        rawDataRPM1.value.shift();
+      }
+      if (rawDataRPM2.value.length > 60) {
+        rawDataRPM2.value.shift();
+      }
     }
 
     // Function to reset graph data
     const resetGraphData = () => {
+      console.log("RPMvTicks has reset")
       rawDataRPM1.value = [];
       rawDataRPM2.value = [];
       ticks.value = 0; // Reset ticks
@@ -113,6 +122,10 @@ export default {
             intersect: false,
           }
         },
+        //animation: {
+         // duration: 200,  // Reduce this value for faster animation (default is 1000ms)
+          //easing: 'easeOutQuad',  // Adjust the easing for different animations (optional)
+        //}
         animation: false, // Disable animation
       }
     };
