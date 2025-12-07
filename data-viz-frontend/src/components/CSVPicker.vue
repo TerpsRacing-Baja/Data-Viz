@@ -36,7 +36,7 @@ function storeChosenFile() {
   <input type="file" id="fileInput" />
   <button @click="storeChosenFile">
     <!-- <font-awesome-icon :icon="isFileChosen.value ? 'faFile' : 'faFileUpload'"></font-awesome-icon> -->
-    {{ isFileChosen ? 'File Chosen' : 'Choose File' }}
+    {{ isFileChosen ? 'File Chosen' : 'Confirm File Choice' }}
   </button>
 </div>
 </template>

@@ -11,38 +11,45 @@
       :zoom="zoom"
       :projection="projection"
     />
+
     <ol-tile-layer>
       <ol-source-osm />
     </ol-tile-layer>
+
     <ol-vector-layer>
       <ol-source-vector ref="sourceRef">
+
+        <!-- One line per segment -->
+        <template v-for="(segment, idx) in path" :key="idx">
+          <ol-feature>
+            <ol-geom-line-string :coordinates="segment" />
+            <ol-style>
+              <ol-style-stroke
+                :color="segmentColors[idx] || 'gray'"
+                :width="strokeWidth"
+              />
+            </ol-style>
+          </ol-feature>
+        </template>
+
+        <!-- Icon -->
         <ol-feature>
-          <ol-geom-multi-line-string
-            ref="pathRef"
-            :coordinates="path"
-          ></ol-geom-multi-line-string>
+          <ol-geom-point :coordinates="curr" />
           <ol-style>
-            <ol-style-stroke
-              :color="strokeColor"
-              :width="strokeWidth"
-            ></ol-style-stroke>
+            <ol-style-icon :src="buggy" :scale="0.05" />
           </ol-style>
         </ol-feature>
-        <ol-feature>
-          <ol-geom-point :coordinates="curr"></ol-geom-point>
-          <ol-style>
-            <ol-style-icon :src="buggy" :scale="0.05"></ol-style-icon>
-          </ol-style>
-        </ol-feature>
+
       </ol-source-vector>
     </ol-vector-layer>
   </ol-map>
 </template>
 
+
 <script setup lang="ts">
 import { inject, ref, onMounted } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, Events, GPS_DATA, GPS_POINT, SESSION_RESET } from "../emitter-messages";
+import { PLAYBACK_UPDATE, Events, GPS_DATA, GPS_POINT, SESSION_RESET, ACCELERATION_DATA } from "../emitter-messages";
 import type View from "ol/View";
 import type VectorSource from "ol/source/vector";
 import buggy from "../assets/buggy.svg";
@@ -54,9 +61,12 @@ const center = ref([-77.4, 39.6]);
 const projection = ref("EPSG:4326");
 const zoom = ref(8);
 const rotation = ref(0);
+const segmentColors = ref<string[]>([]);
+
 
 const strokeWidth = ref(10);
 const strokeColor = ref("red");
+
 
 const path = ref<([[number, number]] | [[number, number], [number, number]])[]>(
   [[[0, 0]]]
@@ -67,6 +77,9 @@ const maxPathLength = ref(400); // Maximum length of the path
 
 let coords: [number, number][];
 let i = 0;
+let avgAccel = 0;
+
+
 
 onMounted(() => {
   // get a reference to OL objects so their methods can be used
@@ -80,10 +93,59 @@ onMounted(() => {
 
   // sets up listener callbacks
   emitter.on(GPS_DATA, (e) => handleGPSData(e, view, source));
+  emitter.on(ACCELERATION_DATA, (e) => handleAccelerationData(e));
   emitter.on(PLAYBACK_UPDATE, (e) => handlePosUpdate(e, view, source));
   emitter.on(GPS_POINT, (e)=> handlePointUpdate(e, view, source));
   emitter.on(SESSION_RESET, resetMapData);
 });
+
+function handleAccelerationData(accel: Events["acceleration-data"]){
+  if (!accel) throw new Error("accel given was empty!");
+  const newx = parseFloat(accel["ax"]);
+  const newy = parseFloat(accel["ay"]);
+  const newz = parseFloat(accel["az"]);
+
+  console.log("Accel Data Received: ", newx, newy, newz);
+
+  avgAccel = Math.sqrt(newx*newx + newy*newy + newz*newz);
+
+
+
+}
+const MIN_ACCEL = 0;
+const MID_ACCEL = 1;  // midpoint where color becomes yellow
+const MAX_ACCEL = 2; // upper limit where color becomes red
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+function rgb(r: number, g: number, b: number) {
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function colorFromAccel(a: number) {
+  if (a <= MIN_ACCEL) return "rgb(0, 255, 0)";   // green
+  if (a >= MAX_ACCEL) return "rgb(255, 0, 0)";   // red
+
+  // Blend green to yellow below midpoint
+  if (a <= MID_ACCEL) {
+    const t = (a - MIN_ACCEL) / (MID_ACCEL - MIN_ACCEL);
+    const r = lerp(0, 255, t);
+    const g = 255;
+    const b = 0;
+    return rgb(r, g, b); // green to yellow
+  }
+
+  // Blend yellow to red above midpoint
+  const t = (a - MID_ACCEL) / (MAX_ACCEL - MID_ACCEL);
+  const r = 255;
+  const g = lerp(255, 0, t);
+  const b = 0;
+  return rgb(r, g, b);   // yellow to red
+}
+
+
 
 function handleGPSData(gps: Events["gps-data"],
 view: View,
@@ -92,7 +154,9 @@ source: VectorSource
   if (!gps) throw new Error("Empty GPS update!");
   //console.log(gps)
 
-  
+  const color = colorFromAccel(avgAccel);
+  segmentColors.value.push(color);
+
 
   coords = gps["coords"];
   //console.log(coords);
@@ -147,10 +211,15 @@ function handlePosUpdate(
 
   // Should scale if we want to jump index, can add or remove path as required
   // Sneaky since there's a builtin if
-  for (let j = i + 1; j <= newIndex["index"]; j++)
-    path.value.push([coords[j - 1], coords[j]]);
+  // for (let j = i + 1; j <= newIndex["index"]; j++)
+  //   path.value.push([coords[j - 1], coords[j]]);
 
   // console.log(path.value)
+  for (let j = i + 1; j <= newIndex.index; j++) {
+    path.value.push([coords[j - 1], coords[j]]);
+    segmentColors.value.push(colorFromAccel(avgAccel));
+  }
+
 
   for (let j = i - 1; j >= newIndex["index"]; j--) path.value.pop();
 
@@ -160,6 +229,7 @@ function handlePosUpdate(
   // Check if path length exceeds the limit
   while (path.value.length > maxPathLength.value) {
     path.value.shift(); // Remove the oldest segment
+    segmentColors.value.shift();
   }
 
   // Update for next time

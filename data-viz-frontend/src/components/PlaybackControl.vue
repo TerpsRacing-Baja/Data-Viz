@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject, onMounted, ref } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, GPS_DATA, CSV_FILE, Events, CAR_SPEED, ROTATION } from "../emitter-messages";
+import { PLAYBACK_UPDATE, GPS_DATA, CSV_FILE, Events, CAR_SPEED, ROTATION, ACCELERATION_DATA } from "../emitter-messages";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { faPlay, faPause } from "@fortawesome/free-solid-svg-icons";
 import { Emitter } from "mitt";
@@ -53,6 +53,13 @@ async function extractFromCSV() {
   try {
     emitter?.emit(PLAYBACK_UPDATE, { index: 0 });//centers view on first index. view.fit will complain but this works
   } catch (error) {console.error("Cannot fit empty extent provided as `geometry`")}
+
+
+  emitter?.emit(ACCELERATION_DATA, {
+    ax: data_csv.value[0]['Accel X'],
+    ay: data_csv.value[0]['Accel Y'],
+    az: data_csv.value[0]['Accel Z']
+  });
 }
 
 function getMapIndex(current_time: number, target_time: number) {
@@ -104,6 +111,26 @@ function singleEmit(index: number){
     yaw: data_csv.value[index]['Euler Yaw'],
     roll: 1
   })
+
+  /* Use either the formatting changes for some reason*/
+/*"AccelX|G|-3.0|3.0|200","AccelY|G|-3.0|3.0|200","AccelZ|G|-3.0|3.0|200"*/
+/*AccelX|G|-3.0|3.0|50,AccelY|G|-3.0|3.0|50,AccelZ|G|-3.0|3.0|50*/
+  emitter.emit(ACCELERATION_DATA, {
+    ax: readAccelKey(data_csv.value[index], "AccelX"),
+    ay: readAccelKey(data_csv.value[index], "AccelY"),
+    az: readAccelKey(data_csv.value[index], "AccelZ")
+  });
+}
+
+function readAccelKey(row: any, base: string) {
+  const longKey = base + "|G|-3.0|3.0|200";
+  const shortKey = base + "|G|-3.0|3.0|50";
+
+  if (longKey in row) return row[longKey];
+  if (shortKey in row) return row[shortKey];
+
+  console.warn("Missing acceleration column for", base);
+  return 0;
 }
 
 function iterateAndPub() {

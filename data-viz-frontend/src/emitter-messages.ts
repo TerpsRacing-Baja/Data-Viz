@@ -12,6 +12,8 @@ export const PLOT_POINT = "plot-point";
 
 export const RPM_DATA = "rpm-data";
 
+export const ACCELERATION_DATA = "acceleration-data"; 
+
 // This specifies the types of events we emit, note the optional flag b/c there could be one of several type
 export type Events = {
   "playback-update"?: { index: number };
@@ -23,4 +25,5 @@ export type Events = {
   "gps-point"?: {point: [number, number]};
   "rpm-data"?: {tick: number, rpm1: number, rpm2: number};
   "plot-point"?: {xPoint: number, yPoint: number};
+  "acceleration-data"?: {ax: number, ay: number, az: number};
 };
