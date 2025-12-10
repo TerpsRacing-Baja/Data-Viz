@@ -1,5 +1,6 @@
 <template>
   <ol-map
+    ref="mapRef"
     :loadTilesWhileAnimating="true"
     :loadTilesWhileInteracting="true"
     style="height: 100%; width: 100%"
@@ -18,10 +19,9 @@
 
     <ol-vector-layer>
       <ol-source-vector ref="sourceRef">
-
         <!-- One line per segment -->
         <template v-for="(segment, idx) in path" :key="idx">
-          <ol-feature>
+          <ol-feature :properties="{ segIndex: idx }">
             <ol-geom-line-string :coordinates="segment" />
             <ol-style>
               <ol-style-stroke
@@ -39,7 +39,6 @@
             <ol-style-icon :src="buggy" :scale="0.05" />
           </ol-style>
         </ol-feature>
-
       </ol-source-vector>
     </ol-vector-layer>
   </ol-map>
@@ -49,72 +48,153 @@
 <script setup lang="ts">
 import { inject, ref, onMounted } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
-import { PLAYBACK_UPDATE, Events, GPS_DATA, GPS_POINT, SESSION_RESET, ACCELERATION_DATA } from "../emitter-messages";
+import {
+  PLAYBACK_UPDATE,
+  Events,
+  GPS_DATA,
+  GPS_POINT,
+  SESSION_RESET,
+  ACCELERATION_DATA,
+} from "../emitter-messages";
 import type View from "ol/View";
 import type VectorSource from "ol/source/vector";
+import type Map from "ol/Map";
+import type Feature from "ol/Feature";
 import buggy from "../assets/buggy.svg";
 
 const emitter = inject(EMITTER_KEY);
+
+const mapRef = ref<{ map: Map }>();
 const viewRef = ref<{ view: View }>();
 const sourceRef = ref<{ source: VectorSource }>();
+
 const center = ref([-77.4, 39.6]);
 const projection = ref("EPSG:4326");
 const zoom = ref(8);
 const rotation = ref(0);
-const segmentColors = ref<string[]>([]);
+const segmentColors = ref<string[]>([]);   // visible window
+const segmentAccel = ref<AccelData[]>([]);    // visible window
+
+// Global caches keyed by segment end index j
+const segmentColorCache: Record<number, string> = {};
+const segmentAccelCache: Record<number, AccelData> = {};
 
 
 const strokeWidth = ref(10);
-const strokeColor = ref("red");
 
-
-const path = ref<([[number, number]] | [[number, number], [number, number]])[]>(
-  [[[0, 0]]]
-);
+const path = ref<([[number, number]] | [[number, number], [number, number]])[]>([
+  [[0, 0]],
+]);
 const curr = ref<[number, number]>([0, 0]);
-
-const maxPathLength = ref(400); // Maximum length of the path
+const maxPathLength = ref(400);
 
 let coords: [number, number][];
 let i = 0;
 let avgAccel = 0;
+let newx, newy, newz = 0;
+
+// Acceleration data type
+interface AccelData {
+  avg: number;
+  ax: number;
+  ay: number;
+  az: number;
+}
+
+// Currently hovered segment info
+const hoveredSegment = ref<{
+  index: number;
+  color: string;
+  accel: AccelData;
+} | null>(null);
+
 
 
 
 onMounted(() => {
-  // get a reference to OL objects so their methods can be used
-  if (!viewRef.value?.view || !sourceRef.value?.source)
+  if (!mapRef.value?.map || !viewRef.value?.view || !sourceRef.value?.source) {
     throw new Error("Map references are broken, rendering stopped");
+  }
+  if (!emitter) throw new Error("Toplevel failed to provide emitter");
 
-  if (!emitter) throw new Error("Toplevel failed to provide emitter"); // Error checking
+  const map: Map = mapRef.value.map;
+  const view: View = viewRef.value.view;
+  const source: VectorSource = sourceRef.value.source;
 
-  const view: View = viewRef.value?.view;
-  const source: VectorSource = sourceRef.value?.source;
-
-  // sets up listener callbacks
+  // events you already had
   emitter.on(GPS_DATA, (e) => handleGPSData(e, view, source));
   emitter.on(ACCELERATION_DATA, (e) => handleAccelerationData(e));
   emitter.on(PLAYBACK_UPDATE, (e) => handlePosUpdate(e, view, source));
-  emitter.on(GPS_POINT, (e)=> handlePointUpdate(e, view, source));
+  emitter.on(GPS_POINT, (e) => handlePointUpdate(e, view, source));
   emitter.on(SESSION_RESET, resetMapData);
+
+  // new hover handler
+  map.on("pointermove", (evt) => {
+    if (evt.dragging) return;
+
+    let hit = false;
+
+    map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+      const f = feature as Feature;
+      const segIndex = f.get("segIndex");
+
+      if (typeof segIndex === "number") {
+        const color = segmentColors.value[segIndex];
+        const accel = segmentAccel.value[segIndex];
+
+        hoveredSegment.value = {
+          index: segIndex,
+          color,
+          accel,
+        };
+
+        console.log(
+          "Hovered segment",
+          segIndex,
+          "color:",
+          color,
+          "accel:",
+          accel
+        );
+
+        hit = true;
+        return true; // stop after first hit
+      }
+
+      return false;
+    });
+
+    if (!hit) {
+      hoveredSegment.value = null;
+    }
+
+    // Optional cursor feedback
+    const target = map.getTargetElement();
+    if (target) {
+      target.style.cursor = hit ? "pointer" : "";
+    }
+  });
 });
 
 function handleAccelerationData(accel: Events["acceleration-data"]){
   if (!accel) throw new Error("accel given was empty!");
-  const newx = parseFloat(accel["ax"]);
-  const newy = parseFloat(accel["ay"]);
-  const newz = parseFloat(accel["az"]);
+  
+  newx = parseFloat(accel["ax"]);
+  newy = parseFloat(accel["ay"]);
+  newz = parseFloat(accel["az"]);
 
-  console.log("Accel Data Received: ", newx, newy, newz);
+  //console.log("Accel Data Received: ", newx, newy, newz);
 
   avgAccel = Math.sqrt(newx*newx + newy*newy + newz*newz);
 
 
 
 }
+
+
 const MIN_ACCEL = 0;
-const MID_ACCEL = 1;  // midpoint where color becomes yellow
-const MAX_ACCEL = 2; // upper limit where color becomes red
+const MID_ACCEL = 1.5;  // midpoint where color becomes yellow
+const MAX_ACCEL = 3; // upper limit where color becomes red
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
@@ -152,10 +232,19 @@ view: View,
 source: VectorSource
 ) {
   if (!gps) throw new Error("Empty GPS update!");
-  //console.log(gps)
+  console.log("HELLO")
 
   const color = colorFromAccel(avgAccel);
+  
+  const accelData: AccelData = {
+    avg: avgAccel,
+    ax: newx,
+    ay: newy,
+    az: newz,
+  };
+  
   segmentColors.value.push(color);
+  segmentAccel.value.push(accelData);
 
 
   coords = gps["coords"];
@@ -187,7 +276,15 @@ function resetMapData() {
   curr.value = [0, 0];
   coords = [];
   i = 0;
+
+  segmentColors.value = [];
+  segmentAccel.value = [];
+
+  // Clear caches
+  for (const k in segmentColorCache) delete segmentColorCache[k];
+  for (const k in segmentAccelCache) delete segmentAccelCache[k];
 }
+
 
 
 function handlePosUpdate(
@@ -196,48 +293,79 @@ function handlePosUpdate(
   source: VectorSource
 ) {
   if (!newIndex) throw new Error("Index update to map was empty!");
-  if (i < 0 || i > coords.length) throw new Error("Index update out of bounds");
 
-  //check if this index is null
-  if (coords[newIndex.index] && coords[newIndex.index][0] !== undefined && coords[newIndex.index][1] !== undefined) {
-    //console.log("Coordinates are defined:", coords[newIndex.index]);
-  } else {
-    //console.log("Coordinates are undefined or contain undefined values.");
+  const targetIndex = newIndex.index;
+
+  if (targetIndex < 0 || targetIndex >= coords.length) {
+    throw new Error("Index update out of bounds");
+  }
+
+  if (coords[targetIndex] == null ||
+      coords[targetIndex][0] === undefined ||
+      coords[targetIndex][1] === undefined) {
     return;
   }
 
-  // Update position for the icon and add to the multilinestring array nesting
-  curr.value = coords[newIndex["index"]];
+  // Update icon position
+  curr.value = coords[targetIndex];
 
-  // Should scale if we want to jump index, can add or remove path as required
-  // Sneaky since there's a builtin if
-  // for (let j = i + 1; j <= newIndex["index"]; j++)
-  //   path.value.push([coords[j - 1], coords[j]]);
-
-  // console.log(path.value)
-  for (let j = i + 1; j <= newIndex.index; j++) {
-    path.value.push([coords[j - 1], coords[j]]);
-    segmentColors.value.push(colorFromAccel(avgAccel));
+  // Special case for index 0
+  if (targetIndex === 0) {
+    path.value = [[coords[0]]];
+    segmentColors.value = [];
+    segmentAccel.value = [];
+    i = 0;
+    view.fit(source.getExtent(), { padding: [50, 50, 50, 50] });
+    return;
   }
 
+  const maxLen = maxPathLength.value;
+  const startIndex = Math.max(0, targetIndex - maxLen);
 
-  for (let j = i - 1; j >= newIndex["index"]; j--) path.value.pop();
+  const newPath: [ [number, number], [number, number] ][] = [];
+  const newColors: string[] = [];
+  const newAccel: AccelData[] = [];
 
-  // Special case for index 0 to clear initial value
-  if (newIndex["index"] == 0) path.value = [[coords[0]]];
+  // Build only the window [startIndex + 1, targetIndex]
+  for (let j = startIndex + 1; j <= targetIndex; j++) {
+    const c0 = coords[j - 1];
+    const c1 = coords[j];
+    if (!c0 || !c1) continue;
 
-  // Check if path length exceeds the limit
-  while (path.value.length > maxPathLength.value) {
-    path.value.shift(); // Remove the oldest segment
-    segmentColors.value.shift();
+    // Get or compute per-segment accel
+    let accel = segmentAccelCache[j];
+    if (accel === undefined) {
+      // First time we ever visit this segment: lock in the current accel
+      accel = {
+        avg: avgAccel,
+        ax: newx,
+        ay: newy,
+        az: newz,
+      };
+      segmentAccelCache[j] = accel;
+    }
+
+    // Get or compute per-segment color
+    let color = segmentColorCache[j];
+    if (!color) {
+      color = colorFromAccel(accel.avg);
+      segmentColorCache[j] = color;
+    }
+
+    newPath.push([c0, c1]);
+    newColors.push(color);
+    newAccel.push(accel);
   }
 
-  // Update for next time
-  i = newIndex["index"];
+  path.value = newPath;
+  segmentColors.value = newColors;
+  segmentAccel.value = newAccel;
 
-  // A nice-to-have, zooms the map in on the path, updating ever time the path changes
+  i = targetIndex;
+
   view.fit(source.getExtent(), { padding: [50, 50, 50, 50] });
 }
+
 
 function handlePointUpdate(
   newPoint: Events["gps-point"],
