@@ -1,52 +1,75 @@
 <template>
-  <ol-map
-    ref="mapRef"
-    :loadTilesWhileAnimating="true"
-    :loadTilesWhileInteracting="true"
-    style="height: 100%; width: 100%"
-  >
-    <ol-view
-      ref="viewRef"
-      :center="center"
-      :rotation="rotation"
-      :zoom="zoom"
-      :projection="projection"
-    />
+  <div style="display: flex; flex-direction: column; height: 100%">
+    <div style="padding: 10px; background: #f0f0f0; border-bottom: 1px solid #ccc">
+      <label style="margin-right: 15px">
+        <strong>Color By:</strong>
+      </label>
+      <label style="margin-right: 15px">
+        <input type="radio" v-model="accelColorMode" value="avg" />
+        Average Acceleration
+      </label>
+      <label style="margin-right: 15px">
+        <input type="radio" v-model="accelColorMode" value="ax" />
+        X Acceleration
+      </label>
+      <label style="margin-right: 15px">
+        <input type="radio" v-model="accelColorMode" value="ay" />
+        Y Acceleration
+      </label>
+      <label style="margin-right: 15px">
+        <input type="radio" v-model="accelColorMode" value="az" />
+        Z Acceleration
+      </label>
+    </div>
+    <ol-map
+      ref="mapRef"
+      :loadTilesWhileAnimating="true"
+      :loadTilesWhileInteracting="true"
+      style="height: 100%; width: 100%"
+    >
+      <ol-view
+        ref="viewRef"
+        :center="center"
+        :rotation="rotation"
+        :zoom="zoom"
+        :projection="projection"
+      />
 
-    <ol-tile-layer>
-      <ol-source-osm />
-    </ol-tile-layer>
+      <ol-tile-layer>
+        <ol-source-osm />
+      </ol-tile-layer>
 
-    <ol-vector-layer>
-      <ol-source-vector ref="sourceRef">
-        <!-- One line per segment -->
-        <template v-for="(segment, idx) in path" :key="idx">
-          <ol-feature :properties="{ segIndex: idx }">
-            <ol-geom-line-string :coordinates="segment" />
+      <ol-vector-layer>
+        <ol-source-vector ref="sourceRef">
+          <!-- One line per segment -->
+          <template v-for="(segment, idx) in path" :key="idx">
+            <ol-feature :properties="{ segIndex: idx }">
+              <ol-geom-line-string :coordinates="segment" />
+              <ol-style>
+                <ol-style-stroke
+                  :color="segmentColors[idx] || 'gray'"
+                  :width="strokeWidth"
+                />
+              </ol-style>
+            </ol-feature>
+          </template>
+
+          <!-- Icon -->
+          <ol-feature>
+            <ol-geom-point :coordinates="curr" />
             <ol-style>
-              <ol-style-stroke
-                :color="segmentColors[idx] || 'gray'"
-                :width="strokeWidth"
-              />
+              <ol-style-icon :src="buggy" :scale="0.05" />
             </ol-style>
           </ol-feature>
-        </template>
-
-        <!-- Icon -->
-        <ol-feature>
-          <ol-geom-point :coordinates="curr" />
-          <ol-style>
-            <ol-style-icon :src="buggy" :scale="0.05" />
-          </ol-style>
-        </ol-feature>
-      </ol-source-vector>
-    </ol-vector-layer>
-  </ol-map>
+        </ol-source-vector>
+      </ol-vector-layer>
+    </ol-map>
+  </div>
 </template>
 
 
 <script setup lang="ts">
-import { inject, ref, onMounted } from "vue";
+import { inject, ref, onMounted, watch } from "vue";
 import { EMITTER_KEY } from "../injection-keys";
 import {
   PLAYBACK_UPDATE,
@@ -74,6 +97,9 @@ const zoom = ref(8);
 const rotation = ref(0);
 const segmentColors = ref<string[]>([]);   // visible window
 const segmentAccel = ref<AccelData[]>([]);    // visible window
+
+// Color mode: which acceleration component to use
+const accelColorMode = ref<'avg' | 'ax' | 'ay' | 'az'>('avg');
 
 // Global caches keyed by segment end index j
 const segmentColorCache: Record<number, string> = {};
@@ -127,6 +153,18 @@ onMounted(() => {
   emitter.on(PLAYBACK_UPDATE, (e) => handlePosUpdate(e, view, source));
   emitter.on(GPS_POINT, (e) => handlePointUpdate(e, view, source));
   emitter.on(SESSION_RESET, resetMapData);
+
+  // Watch for mode changes to recalculate colors
+  watch(() => accelColorMode.value, () => {
+    // Clear the color cache and recalculate
+    for (const k in segmentColorCache) delete segmentColorCache[k];
+    
+    // Regenerate colors for visible segments
+    const newColors = segmentAccel.value.map(accel => 
+      colorFromAccel(accel, accelColorMode.value)
+    );
+    segmentColors.value = newColors;
+  });
 
   // new hover handler
   map.on("pointermove", (evt) => {
@@ -196,6 +234,14 @@ const MIN_ACCEL = 0;
 const MID_ACCEL = 1.5;  // midpoint where color becomes yellow
 const MAX_ACCEL = 3; // upper limit where color becomes red
 
+const SINGLE_MIN_ACCEL = -0.8; //blue
+const SINGLE_MAX_ACCEL = 0.8; //red
+
+const Z_AXIS_MIN_ACCEL = -0.8; 
+const Z_AXIS_MAX_ACCEL = 0.8;
+
+
+
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
@@ -204,25 +250,93 @@ function rgb(r: number, g: number, b: number) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-function colorFromAccel(a: number) {
-  if (a <= MIN_ACCEL) return "rgb(0, 255, 0)";   // green
-  if (a >= MAX_ACCEL) return "rgb(255, 0, 0)";   // red
-
-  // Blend green to yellow below midpoint
-  if (a <= MID_ACCEL) {
-    const t = (a - MIN_ACCEL) / (MID_ACCEL - MIN_ACCEL);
-    const r = lerp(0, 255, t);
-    const g = 255;
-    const b = 0;
-    return rgb(r, g, b); // green to yellow
+function colorFromAccel(accelData: AccelData, mode: 'avg' | 'ax' | 'ay' | 'az' = 'avg') {
+  let a = 0;
+  
+  // Select the requested component. For axis-specific modes preserve sign
+  // so negative values map to red and positive values to blue. For `avg`
+  // we keep the magnitude as before.
+  if (mode === 'avg') {
+    a = accelData.avg;
+  } else if (mode === 'ax') {
+    a = accelData.ax;
+  } else if (mode === 'ay') {
+    a = accelData.ay;
+  } else if (mode === 'az') {
+    a = accelData.az;
   }
 
-  // Blend yellow to red above midpoint
-  const t = (a - MID_ACCEL) / (MAX_ACCEL - MID_ACCEL);
-  const r = 255;
-  const g = lerp(255, 0, t);
-  const b = 0;
-  return rgb(r, g, b);   // yellow to red
+  
+
+
+  if (mode=='avg'){
+    if (a <= MIN_ACCEL) return "rgb(0, 255, 0)";   // green
+    if (a >= MAX_ACCEL) return "rgb(255, 0, 0)";   // red
+
+    // Blend green to yellow below midpoint
+    if (a <= MID_ACCEL) {
+      const t = (a - MIN_ACCEL) / (MID_ACCEL - MIN_ACCEL);
+      const r = lerp(0, 255, t);
+      const g = 255;
+      const b = 0;
+      return rgb(r, g, b); // green to yellow
+    }
+
+    // Blend yellow to red above midpoint
+    const t = (a - MID_ACCEL) / (MAX_ACCEL - MID_ACCEL);
+    const r = 255;
+    const g = lerp(255, 0, t);
+    const b = 0;
+    return rgb(r, g, b);   // yellow to red
+  } else if (mode == "az") {
+    // Z-axis mode: blend red -> white -> blue (negative -> zero -> positive)
+    if (a <= Z_AXIS_MIN_ACCEL) {
+      return "rgb(255, 0, 0)"; // very negative => red
+    }
+    if (a >= Z_AXIS_MAX_ACCEL) {
+      return "rgb(0, 0, 255)"; // very positive => blue
+    }
+
+    if (a <= 0) {
+      // [Z_AXIS_MIN_ACCEL, 0] -> red to white
+      const t = (a - Z_AXIS_MIN_ACCEL) / (0 - Z_AXIS_MIN_ACCEL);
+      const r = 255;
+      const g = lerp(0, 255, t);
+      const b = lerp(0, 255, t);
+      return rgb(r, g, b); // red -> white
+    } else {
+      // [0, Z_AXIS_MAX_ACCEL] -> white to blue
+      const t = a / Z_AXIS_MAX_ACCEL;
+      const r = lerp(255, 0, t);
+      const g = lerp(255, 0, t);
+      const b = 255;
+      return rgb(r, g, b); // white -> blue
+    }
+  } else {
+    // Single-axis (ax/ay) mode: negative -> red, positive -> blue
+    if (a <= SINGLE_MIN_ACCEL) {
+      return "rgb(255, 0, 0)"; // very negative => red
+    }
+    if (a >= SINGLE_MAX_ACCEL) {
+      return "rgb(0, 0, 255)"; // very positive => blue
+    }
+
+    if (a <= 0) {
+      // [SINGLE_MIN_ACCEL, 0] -> red to white
+      const t = (a - SINGLE_MIN_ACCEL) / (0 - SINGLE_MIN_ACCEL);
+      const r = 255;
+      const g = lerp(0, 255, t);
+      const b = lerp(0, 255, t);
+      return rgb(r, g, b);
+    } else {
+      // [0, SINGLE_MAX_ACCEL] -> white to blue
+      const t = a / SINGLE_MAX_ACCEL;
+      const r = lerp(255, 0, t);
+      const g = lerp(255, 0, t);
+      const b = 255;
+      return rgb(r, g, b);
+    }
+  }
 }
 
 
@@ -234,14 +348,14 @@ source: VectorSource
   if (!gps) throw new Error("Empty GPS update!");
   console.log("HELLO")
 
-  const color = colorFromAccel(avgAccel);
-  
   const accelData: AccelData = {
     avg: avgAccel,
     ax: newx,
     ay: newy,
     az: newz,
   };
+  
+  const color = colorFromAccel(accelData, accelColorMode.value);
   
   segmentColors.value.push(color);
   segmentAccel.value.push(accelData);
@@ -348,7 +462,7 @@ function handlePosUpdate(
     // Get or compute per-segment color
     let color = segmentColorCache[j];
     if (!color) {
-      color = colorFromAccel(accel.avg);
+      color = colorFromAccel(accel, accelColorMode.value);
       segmentColorCache[j] = color;
     }
 
